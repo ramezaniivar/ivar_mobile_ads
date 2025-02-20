@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'ming_cute_font.dart';
 
 final class Constants {
-  static const baseUrl = 'http://localhost:8080';
+  static const baseUrl = 'https://ivar-ads.com';
   static const apiV1 = '$baseUrl/api/v1';
 }
 
