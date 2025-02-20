@@ -100,7 +100,7 @@ class MyHomePage extends StatelessWidget {
           if (snapshot.hasData && snapshot.data != null) {
             return IvarBannerAdWidget(snapshot.data!);
           }
-          return CircularProgressIndicator();
+          return SizedBox();
         },
       ),
     );
