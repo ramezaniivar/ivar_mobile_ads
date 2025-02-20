@@ -1,0 +1,62 @@
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:ivar_mobile_ads/src/core/constants.dart';
+
+class DeviceInfoService {
+  DeviceInfoService._();
+
+  static final DeviceInfoService _instance = DeviceInfoService._();
+
+  static DeviceInfoService get instance => _instance;
+
+  final _deviceInfo = DeviceInfoPlugin();
+  AndroidDeviceInfo? _androidInfo;
+  IosDeviceInfo? _iosInfo;
+
+  Future<String> get id async {
+    if (Platform.isAndroid) {
+      _androidInfo ??= await _deviceInfo.androidInfo;
+      return _androidInfo!.id;
+    } else if (Platform.isIOS) {
+      _iosInfo ??= await _deviceInfo.iosInfo;
+      return _iosInfo!.identifierForVendor ??
+          DateTime.now().microsecondsSinceEpoch.toString();
+    } else {
+      throw Exception('only support android and iPhone');
+    }
+  }
+
+  Future<String> get model async {
+    if (Platform.isAndroid) {
+      _androidInfo ??= await _deviceInfo.androidInfo;
+      return _androidInfo!.model;
+    } else if (Platform.isIOS) {
+      _iosInfo ??= await _deviceInfo.iosInfo;
+      return _iosInfo!.model;
+    } else {
+      throw Exception('only support android and iPhone');
+    }
+  }
+
+  Future<String> get apiLevel async {
+    if (Platform.isAndroid) {
+      _androidInfo ??= await _deviceInfo.androidInfo;
+      return _androidInfo!.version.release;
+    } else if (Platform.isIOS) {
+      _iosInfo ??= await _deviceInfo.iosInfo;
+      return _iosInfo!.systemVersion;
+    } else {
+      throw Exception('only support android and iPhone');
+    }
+  }
+
+  String get timeZone => DateTime.now().timeZoneName;
+
+  String get languageCode => Platform.localeName.split('_').first;
+  IvarDevice get platform => Platform.isAndroid
+      ? IvarDevice.android
+      : Platform.isIOS
+          ? IvarDevice.iPhone
+          : throw Exception('device not supported');
+}
