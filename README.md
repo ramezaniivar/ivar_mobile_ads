@@ -10,7 +10,6 @@ For general information about developing packages, see the Dart guide for
 and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
-
 # Ivar Mobile Ads
 
 A Flutter package that provides a flexible and easy-to-use advertising solution for mobile applications. This package allows you to integrate and display various types of banner advertisements in your Flutter applications.
@@ -29,13 +28,34 @@ A Flutter package that provides a flexible and easy-to-use advertising solution 
 
 ## Getting Started
 
-### Prerequisites
+### Installation
 
-Add this package to your Flutter project by including it in your `pubspec.yaml`:
+You can install this package in two ways:
+
+#### 1. Using pub.dev
+
+Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
   ivar_mobile_ads: ^latest_version
+```
+
+#### 2. Using GitHub
+
+If you want to use the latest development version, you can install directly from GitHub:
+
+```yaml
+dependencies:
+  ivar_mobile_ads:
+    git:
+      url: https://github.com/YourUsername/ivar_mobile_ads.git
+      ref: main  # or use a specific branch/tag
+```
+
+Then run:
+```bash
+flutter pub get
 ```
 
 ### Initialization
