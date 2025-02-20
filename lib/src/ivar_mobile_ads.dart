@@ -1,6 +1,5 @@
 import 'package:ivar_mobile_ads/ivar_mobile_ads.dart';
 
-import 'ivar_banner_ad.dart';
 import 'repository.dart';
 
 class IvarMobileAds {

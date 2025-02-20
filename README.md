@@ -11,29 +11,122 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+# Ivar Mobile Ads
+
+A Flutter package that provides a flexible and easy-to-use advertising solution for mobile applications. This package allows you to integrate and display various types of banner advertisements in your Flutter applications.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- 🚀 Easy initialization with app ID
+- 📱 Multiple banner ad sizes support:
+  - Standard (320x50)
+  - Large (320x100)
+  - Medium Rectangle (300x250)
+- 🎯 Support for both textual and image-based banner ads
+- ♻️ Auto-rotating banner carousel
+- 📐 Responsive layout handling
+- 🎨 Custom banner implementations
 
-## Getting started
+## Getting Started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+### Prerequisites
+
+Add this package to your Flutter project by including it in your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  ivar_mobile_ads: ^latest_version
+```
+
+### Initialization
+
+Initialize the ads service at app startup:
+
+```dart
+void main() async {
+  // Initialize the ads service
+  final adsInitialized = await IvarMobileAds.instance.init('YOUR_APP_ID');
+  
+  if (adsInitialized) {
+    print('Ads service initialized successfully');
+  }
+}
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+### Loading Banner Ads
 
 ```dart
-const like = 'sample';
+// Load a standard banner ad
+final bannerAd = await IvarMobileAds.instance.loadBannerAds(BannerAdSize.standard);
+
+// Load a medium rectangle banner ad
+final mediumRectangleAd = await IvarMobileAds.instance.loadBannerAds(BannerAdSize.mediumRectangle);
 ```
 
-## Additional information
+### Displaying Banner Ads
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```dart
+// Display the banner ad using the widget
+if (bannerAd != null) {
+  IvarBannerAdWidget(bannerAd)
+}
+```
+
+### Available Banner Sizes
+
+```dart
+enum BannerAdSize {
+  standard,        // 320x50
+  large,          // 320x100
+  mediumRectangle // 300x250
+}
+```
+
+## Example
+
+Here's a complete example of implementing a banner ad in your Flutter application:
+
+```dart
+class MyHomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Ad Example')),
+      body: FutureBuilder<IvarBannerAd?>(
+        future: IvarMobileAds.instance.loadBannerAds(BannerAdSize.standard),
+        builder: (context, snapshot) {
+          if (snapshot.hasData && snapshot.data != null) {
+            return IvarBannerAdWidget(snapshot.data!);
+          }
+          return CircularProgressIndicator();
+        },
+      ),
+    );
+  }
+}
+```
+
+## Additional Information
+
+### Support
+
+For issues, feature requests, or general questions:
+- Create an issue on our GitHub repository
+- Contact our support team
+
+### Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+### Best Practices
+
+- Initialize the ads service as early as possible in your app lifecycle
+- Handle null responses when loading ads
+- Implement proper error handling
+- Test different banner sizes in various screen configurations
