@@ -1,3 +1,6 @@
 ## 0.0.1
 
-* TODO: Describe initial release.
+* Initial release
+* Support for banner ads in different sizes
+* Support for text and image ads
+* Responsive layout handling

@@ -1,7 +1,8 @@
 name: ivar_mobile_ads
-description: "ivar advertising service"
+description: A Flutter package for displaying customizable mobile advertisements
 version: 0.0.1
-homepage:
+homepage: https://github.com/ramezaniivar/ivar_mobile_ads
+repository: https://github.com/ramezaniivar/ivar_mobile_ads
 
 environment:
   sdk: ^3.6.0
