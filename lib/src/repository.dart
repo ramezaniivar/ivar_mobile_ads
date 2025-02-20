@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:async';
 
 import 'package:ivar_mobile_ads/src/core/constants.dart';
 
@@ -19,6 +20,7 @@ class Repository {
   final _deviceInfo = DeviceInfoService.instance;
 
   bool _isAuth = false;
+  Completer<void>? _authCompleter;
   IvarBannerAd? _standardBanners;
   IvarBannerAd? _largeBanners;
   IvarBannerAd? _mediumRectangleBanners;
@@ -26,7 +28,15 @@ class Repository {
   bool get isAuth => _isAuth;
 
   Future<bool> auth(String appID) async {
-    if (_isAuth) throw Exception('You have already authenticated');
+    if (_isAuth) return true;
+
+    // If authentication is already in progress, wait for it
+    if (_authCompleter != null) {
+      await _authCompleter!.future;
+      return _isAuth;
+    }
+
+    _authCompleter = Completer<void>();
 
     try {
       final req = AuthReq(
@@ -38,17 +48,20 @@ class Repository {
 
       final response = await _api.auth(req);
 
-      //save tokens
       await _saveTokens(
         response.data['accessToken'],
         response.data['refreshToken'],
       );
       _isAuth = true;
+      _authCompleter!.complete();
       return true;
     } catch (err) {
       log(err.toString());
       _isAuth = false;
+      _authCompleter!.completeError(err);
       return false;
+    } finally {
+      _authCompleter = null;
     }
   }
 
@@ -58,7 +71,14 @@ class Repository {
   }
 
   Future<IvarBannerAd?> getBannerAds(BannerAdSize size) async {
-    if (!_isAuth) throw Exception('You need to initilize first');
+    // Wait for authentication if it's in progress
+    if (_authCompleter != null) await _authCompleter!.future;
+
+    // If not authenticated, start authentication process
+    if (!_isAuth) {
+      log('ivar_mobile_ads: You need to initilize first');
+      return null;
+    }
 
     try {
       switch (size) {
@@ -73,7 +93,6 @@ class Repository {
           break;
       }
 
-      //GET request
       final response = await _api.getBannerAds(size);
       final banners = bannerEntityFromJson(response.data['data']);
       if (banners.isEmpty) return null;
@@ -96,7 +115,11 @@ class Repository {
   }
 
   Future<void> viewBanner(String id) async {
-    if (!_isAuth) throw Exception('You need to initilize first');
+    if (_authCompleter != null) await _authCompleter!.future;
+    if (!_isAuth) {
+      log('ivar_mobile_ads: You need to initilize first');
+      return;
+    }
 
     try {
       await _api.view(id);
@@ -106,7 +129,11 @@ class Repository {
   }
 
   Future<void> clickBanner(String id) async {
-    if (!_isAuth) throw Exception('You need to initilize first');
+    if (_authCompleter != null) await _authCompleter!.future;
+    if (!_isAuth) {
+      log('ivar_mobile_ads: You need to initilize first');
+      return;
+    }
 
     try {
       await _api.click(id);
