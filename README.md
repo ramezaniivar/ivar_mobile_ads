@@ -63,13 +63,26 @@ flutter pub get
 Initialize the ads service at app startup:
 
 ```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize the ads service
+  IvarMobileAds.instance.init('YOUR_APP_ID');
+
+  runApp(const MyApp());
+}
+```
+OR
+```dart
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   // Initialize the ads service
   final adsInitialized = await IvarMobileAds.instance.init('YOUR_APP_ID');
   
   if (adsInitialized) {
     print('Ads service initialized successfully');
   }
+
+  runApp(const MyApp());
 }
 ```
 

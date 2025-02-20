@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
 
 import 'api_service.dart';
@@ -56,7 +57,11 @@ class Repository {
       _authCompleter!.complete();
       return true;
     } catch (err) {
-      log(err.toString());
+      if (err is DioException) {
+        log('ivar_mobile_ads: ${err.response?.data}');
+      } else {
+        log('ivar_mobile_ads: $err');
+      }
       _isAuth = false;
       _authCompleter!.completeError(err);
       return false;

@@ -6,7 +6,7 @@ class MingCuteIconData extends IconData {
   const MingCuteIconData(super.code)
       : super(
           fontFamily: 'MingCute',
-          // fontPackage: 'icons_plus',
+          fontPackage: 'ivar_mobile_ads',
         );
 }
 

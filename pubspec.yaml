@@ -49,23 +49,23 @@ flutter:
     - family: Vazir
       fonts:
         - asset: assets/fonts/vazir/Vazirmatn-Black.ttf
-          weight: 100
+          weight: 900
         - asset: assets/fonts/vazir/Vazirmatn-Bold.ttf
-          weight: 200
+          weight: 800
         - asset: assets/fonts/vazir/Vazirmatn-ExtraBold.ttf
-          weight: 300
+          weight: 700
         - asset: assets/fonts/vazir/Vazirmatn-ExtraLight.ttf
-          weight: 400
+          weight: 600
         - asset: assets/fonts/vazir/Vazirmatn-Light.ttf
           weight: 500
         - asset: assets/fonts/vazir/Vazirmatn-Medium.ttf
-          weight: 600
+          weight: 400
         - asset: assets/fonts/vazir/Vazirmatn-Regular.ttf
-          weight: 700
+          weight: 300
         - asset: assets/fonts/vazir/Vazirmatn-SemiBold.ttf
-          weight: 800
+          weight: 200
         - asset: assets/fonts/vazir/Vazirmatn-Thin.ttf
-          weight: 900
+          weight: 100
     - family: MingCute
       fonts:
         - asset: assets/fonts/MingCute.ttf
