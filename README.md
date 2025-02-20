@@ -50,7 +50,6 @@ dependencies:
   ivar_mobile_ads:
     git:
       url: https://github.com/YourUsername/ivar_mobile_ads.git
-      ref: main  # or use a specific branch/tag
 ```
 
 Then run:
