@@ -49,7 +49,7 @@ If you want to use the latest development version, you can install directly from
 dependencies:
   ivar_mobile_ads:
     git:
-      url: https://github.com/YourUsername/ivar_mobile_ads.git
+      url: https://github.com/ramezaniivar/ivar_mobile_ads.git
 ```
 
 Then run:
