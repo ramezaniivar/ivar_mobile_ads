@@ -19,18 +19,18 @@ class TokenInterceptor extends Interceptor {
       final isConnected = await checkInternet();
       if (!isConnected) {
         log('ivar_mobile_ads: check internet');
-        // return handler.reject(
-        //   DioException(
-        //     requestOptions: options,
-        //     error: 'internet connection',
-        //     type: DioExceptionType.unknown,
-        //     message: 'check internet',
-        //   ),
-        // );
+        return handler.reject(
+          DioException(
+            requestOptions: options,
+            // error: 'internet connection',
+            // type: DioExceptionType.unknown,
+            // message: 'check internet',
+          ),
+        );
       }
 
       final accessToken = await storage.getAccessToken();
-      if (accessToken != null) {
+      if (accessToken != null && !options.path.contains('auth')) {
         options.headers['Authorization'] = 'Bearer $accessToken';
       }
       return handler.next(options);
@@ -90,7 +90,7 @@ class TokenInterceptor extends Interceptor {
     final response = await dio.post(
       '${Constants.apiV1}/auth/refresh',
       data: {
-        'token': refreshToken,
+        'refreshToken': refreshToken,
       },
     );
 
@@ -100,8 +100,6 @@ class TokenInterceptor extends Interceptor {
 
       await storage.saveAccessToken(newAccessToken);
       await storage.saveRefreshToken(newRefreshToken);
-
-      log('Token refreshed successfully');
     } else {
       throw DioException(
         requestOptions: RequestOptions(path: ''),

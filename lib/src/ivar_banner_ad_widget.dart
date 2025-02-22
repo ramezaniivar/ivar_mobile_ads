@@ -98,7 +98,8 @@ class _TextualBanner extends StatelessWidget {
     return switch (size) {
       BannerAdSize.standard => _StandardTextualBanner(banner, bannerHeight),
       BannerAdSize.large => _LargeTextualBanner(banner, bannerHeight),
-      BannerAdSize.mediumRectangle => _MediumRectangleBanner(banner),
+      BannerAdSize.mediumRectangle =>
+        _MediumRectangleBanner(banner, bannerHeight),
     };
   }
 }
@@ -349,8 +350,9 @@ class _LargeTextualBanner extends StatelessWidget {
 }
 
 class _MediumRectangleBanner extends StatelessWidget {
-  const _MediumRectangleBanner(this.banner);
+  const _MediumRectangleBanner(this.banner, this.bannerHeight);
   final TextualBannerEntity banner;
+  final double bannerHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -384,11 +386,11 @@ class _MediumRectangleBanner extends StatelessWidget {
                 children: [
                   if (banner.icon != null)
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(bannerHeight * 0.03),
                       child: CachedNetworkImage(
                         imageUrl: '${Constants.baseUrl}/${banner.icon}',
-                        width: 60,
-                        height: 60,
+                        width: bannerHeight * 0.25,
+                        height: bannerHeight * 0.25,
                       ),
                     ),
                   SizedBox(height: 7),
@@ -398,10 +400,11 @@ class _MediumRectangleBanner extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: bannerHeight * 0.05,
                       color: Constants.textColor,
                       fontFamily: font,
                       package: 'ivar_mobile_ads',
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   SizedBox(height: 3),
@@ -411,8 +414,10 @@ class _MediumRectangleBanner extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 8,
+                      fontSize: bannerHeight * 0.04,
                       color: Constants.textColor.withAlpha(180),
+                      fontFamily: font,
+                      package: 'ivar_mobile_ads',
                     ),
                   ),
                   SizedBox(height: 10),
@@ -424,7 +429,7 @@ class _MediumRectangleBanner extends StatelessWidget {
                         banner.callToAction ?? '',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           fontFamily: font,
                           package: 'ivar_mobile_ads',
@@ -434,7 +439,7 @@ class _MediumRectangleBanner extends StatelessWidget {
                           ? null
                           : Icon(
                               banner.platform.icon,
-                              size: 14,
+                              size: 16,
                               color: Colors.white,
                             ),
                     ),
