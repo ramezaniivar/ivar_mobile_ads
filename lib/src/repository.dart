@@ -19,6 +19,8 @@ class Repository {
   final _api = ApiService.instance;
   final _secureStorage = SecureStorageService.instance;
   final _deviceInfo = DeviceInfoService.instance;
+  final List<String> _viewedBanners = [];
+  final List<String> _clickedBanners = [];
 
   bool _isAuth = false;
   Completer<void>? _authCompleter;
@@ -126,6 +128,9 @@ class Repository {
       return;
     }
 
+    if (_viewedBanners.contains(id)) return;
+    _viewedBanners.add(id);
+
     try {
       await _api.view(id);
     } catch (err) {
@@ -139,6 +144,9 @@ class Repository {
       log('ivar_mobile_ads: You need to initilize first');
       return;
     }
+
+    if (_clickedBanners.contains(id)) return;
+    _clickedBanners.add(id);
 
     try {
       await _api.click(id);

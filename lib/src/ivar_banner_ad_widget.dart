@@ -20,37 +20,120 @@ class IvarBannerAdWidget extends StatefulWidget {
   State<IvarBannerAdWidget> createState() => _IvarBannerAdWidgetState();
 }
 
-class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget> {
+class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
+    with RouteAware, WidgetsBindingObserver {
   late PageController _pageController;
   Timer? _timer;
+  bool _isVisible = true;
+  bool _isInForeground = true;
+  late RouteObserver<PageRoute> routeObserver;
 
   @override
   void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController = PageController();
 
+    // ثبت بازدید اولیه
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _logBannerView(0);
+    });
+
+    // شروع تایمر برای چند تبلیغ
     if (widget.bannerAd.ads.length > 1) {
+      _startAutoScrollIfNeeded();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver = RouteObserver<PageRoute>();
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _isInForeground = true;
+        if (widget.bannerAd.ads.length > 1) {
+          _startAutoScrollIfNeeded();
+        } else {
+          // ثبت مجدد بازدید برای تک تبلیغ
+          _logBannerView(0);
+        }
+        break;
+      case AppLifecycleState.paused:
+        _isInForeground = false;
+        _stopAutoScroll();
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _startAutoScrollIfNeeded() {
+    if (_isVisible && _isInForeground && widget.bannerAd.ads.length > 1) {
+      _timer?.cancel();
       _timer = Timer.periodic(
         widget.refresh,
         (timer) {
+          if (!_isVisible || !_isInForeground) return;
+
           if (_pageController.page?.toInt() == widget.bannerAd.ads.length - 1) {
             _pageController.jumpToPage(0);
+            // _logBannerView(0);
           } else {
-            _pageController.nextPage(
+            _pageController
+                .nextPage(
               duration: Duration(milliseconds: 400),
               curve: Curves.easeIn,
-            );
+            )
+                .then((_) {
+              // _logBannerView(_pageController.page?.toInt() ?? 0);
+            });
           }
         },
       );
     }
+  }
 
-    super.initState();
+  void _stopAutoScroll() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  void _logBannerView(int index) {
+    if (_isVisible && _isInForeground && index < widget.bannerAd.ads.length) {
+      final banner = widget.bannerAd.ads[index];
+      // اینجا متد ثبت بازدید را صدا بزنید
+      Repository.instance.viewBanner(banner.id);
+    }
+  }
+
+  @override
+  void didPushNext() {
+    _isVisible = false;
+    _stopAutoScroll();
+  }
+
+  @override
+  void didPopNext() {
+    _isVisible = true;
+    if (widget.bannerAd.ads.length > 1) {
+      _startAutoScrollIfNeeded();
+    } else {
+      _logBannerView(0);
+    }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _pageController.dispose();
+    routeObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -68,11 +151,11 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget> {
           child: PageView(
             controller: _pageController,
             physics: NeverScrollableScrollPhysics(),
+            onPageChanged: _logBannerView,
             children: List.generate(
               widget.bannerAd.ads.length,
               (index) {
                 final banner = widget.bannerAd.ads[index];
-
                 return switch (banner) {
                   TextualBannerEntity() =>
                     _TextualBanner(banner, widget.bannerAd.size, height),
@@ -151,9 +234,11 @@ class _StandardTextualBanner extends StatelessWidget {
             children: [
               if (banner.icon != null)
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(7),
                   child: CachedNetworkImage(
                     imageUrl: '${Constants.baseUrl}/${banner.icon}',
+                    width: bannerHeight * 0.75,
+                    height: bannerHeight * 0.75,
                   ),
                 ),
               Expanded(
@@ -171,7 +256,7 @@ class _StandardTextualBanner extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                fontSize: bannerHeight * 0.23,
+                                fontSize: bannerHeight * 0.22,
                                 color: Constants.textColor,
                                 fontFamily: font,
                                 package: 'ivar_mobile_ads',
@@ -185,7 +270,7 @@ class _StandardTextualBanner extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: bannerHeight * 0.2,
+                        fontSize: bannerHeight * 0.19,
                         color: Constants.textColor.withAlpha(180),
                         fontFamily: font,
                         package: 'ivar_mobile_ads',
