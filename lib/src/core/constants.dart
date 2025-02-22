@@ -40,41 +40,23 @@ enum AdPlatform {
   android,
   iPhone;
 
-  IconData? get icon {
-    switch (this) {
-      case AdPlatform.web:
-        return MingCute.web_fill;
-      case AdPlatform.instagram:
-        return MingCute.camera_fill;
-      case AdPlatform.telegram:
-        return MingCute.telegram_fill;
-      case AdPlatform.youTube:
-        return MingCute.youtube_fill;
-      case AdPlatform.android:
-        return MingCute.Android_2_fill;
-      case AdPlatform.iPhone:
-        return MingCute.apple_fill;
-      default:
-        return null;
-    }
-  }
+  IconData? get icon => switch (this) {
+        AdPlatform.web => MingCute.web_fill,
+        AdPlatform.instagram => MingCute.camera_fill,
+        AdPlatform.telegram => MingCute.telegram_fill,
+        AdPlatform.youTube => MingCute.youtube_fill,
+        AdPlatform.android => MingCute.Android_2_fill,
+        AdPlatform.iPhone => MingCute.apple_fill,
+        AdPlatform.none => null,
+      };
 
-  Color? get color {
-    switch (this) {
-      case AdPlatform.web:
-        return Colors.black54;
-      case AdPlatform.instagram:
-        return Colors.pink;
-      case AdPlatform.telegram:
-        return Colors.blue;
-      case AdPlatform.youTube:
-        return Colors.red;
-      case AdPlatform.android:
-        return Colors.teal;
-      case AdPlatform.iPhone:
-        return Colors.black54;
-      default:
-        return null;
-    }
-  }
+  Color? get color => switch (this) {
+        AdPlatform.web => Colors.black54,
+        AdPlatform.instagram => Colors.pink,
+        AdPlatform.telegram => Colors.blue,
+        AdPlatform.youTube => Colors.red,
+        AdPlatform.android => Colors.teal,
+        AdPlatform.iPhone => Colors.black54,
+        AdPlatform.none => null,
+      };
 }
