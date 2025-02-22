@@ -16,27 +16,17 @@ enum BannerAdSize {
   large,
   mediumRectangle;
 
-  int get width {
-    switch (this) {
-      case BannerAdSize.mediumRectangle:
-        return 300;
-      case BannerAdSize.large:
-        return 320;
-      case BannerAdSize.standard:
-        return 320;
-    }
-  }
+  double get width => switch (this) {
+        BannerAdSize.standard => 320,
+        BannerAdSize.large => 320,
+        BannerAdSize.mediumRectangle => 300,
+      };
 
-  int get height {
-    switch (this) {
-      case BannerAdSize.mediumRectangle:
-        return 250;
-      case BannerAdSize.large:
-        return 100;
-      case BannerAdSize.standard:
-        return 50;
-    }
-  }
+  double get height => switch (this) {
+        BannerAdSize.standard => 50,
+        BannerAdSize.large => 100,
+        BannerAdSize.mediumRectangle => 250,
+      };
 }
 
 enum AdType { image, textual }
