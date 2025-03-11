@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
 
 class DeviceInfoService {
@@ -51,7 +52,8 @@ class DeviceInfoService {
     }
   }
 
-  String get timeZone => DateTime.now().timeZoneName;
+  ///get device time zone for example "Asia/Tehran"
+  Future<String> get timeZone => FlutterTimezone.getLocalTimezone();
 
   String get languageCode => Platform.localeName.split('_').first;
   IvarDevice get platform => Platform.isAndroid

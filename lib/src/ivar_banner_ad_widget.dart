@@ -12,7 +12,7 @@ import 'ivar_banner_ad.dart';
 
 class IvarBannerAdWidget extends StatefulWidget {
   const IvarBannerAdWidget(this.bannerAd,
-      {this.refresh = const Duration(seconds: 8), super.key});
+      {this.refresh = const Duration(seconds: 14), super.key});
   final IvarBannerAd bannerAd;
   final Duration refresh;
 
@@ -280,10 +280,10 @@ class _StandardTextualBanner extends StatelessWidget {
                 ),
               ),
               if (hasButton)
-                ElevatedButton.icon(
+                ElevatedButton(
                   onPressed: () => _bannerOnTap(banner.id, banner.link),
                   style: _elevatedButtonStyle,
-                  label: Text(
+                  child: Text(
                     banner.callToAction ?? '',
                     style: TextStyle(
                       color: Colors.white,
@@ -293,13 +293,6 @@ class _StandardTextualBanner extends StatelessWidget {
                       package: 'ivar_mobile_ads',
                     ),
                   ),
-                  icon: banner.platform == AdPlatform.none
-                      ? null
-                      : Icon(
-                          banner.platform.icon,
-                          size: 14,
-                          color: Colors.white,
-                        ),
                 )
             ],
           ),
@@ -394,11 +387,11 @@ class _LargeTextualBanner extends StatelessWidget {
                                 ),
                               ),
                               if (hasButton)
-                                ElevatedButton.icon(
+                                ElevatedButton(
                                   onPressed: () =>
                                       _bannerOnTap(banner.id, banner.link),
                                   style: _elevatedButtonStyle,
-                                  label: Text(
+                                  child: Text(
                                     banner.callToAction ?? '',
                                     style: TextStyle(
                                       color: Colors.white,
@@ -408,13 +401,6 @@ class _LargeTextualBanner extends StatelessWidget {
                                       package: 'ivar_mobile_ads',
                                     ),
                                   ),
-                                  icon: banner.platform == AdPlatform.none
-                                      ? null
-                                      : Icon(
-                                          banner.platform.icon,
-                                          size: 14,
-                                          color: Colors.white,
-                                        ),
                                 ),
                             ],
                           ),
@@ -512,10 +498,10 @@ class _MediumRectangleBanner extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     if (hasButton)
-                      ElevatedButton.icon(
+                      ElevatedButton(
                         onPressed: () => _bannerOnTap(banner.id, banner.link),
                         style: _elevatedButtonStyle,
-                        label: Text(
+                        child: Text(
                           banner.callToAction ?? '',
                           style: TextStyle(
                             color: Colors.white,
@@ -525,13 +511,6 @@ class _MediumRectangleBanner extends StatelessWidget {
                             package: 'ivar_mobile_ads',
                           ),
                         ),
-                        icon: banner.platform == AdPlatform.none
-                            ? null
-                            : Icon(
-                                banner.platform.icon,
-                                size: 16,
-                                color: Colors.white,
-                              ),
                       ),
                   ],
                 ),

@@ -8,16 +8,12 @@ sealed class BannerEntity extends Entity {
   const BannerEntity({
     required super.id,
     required this.link,
-    required this.priority,
     required this.type,
-    required this.platform,
     this.language,
   });
 
   final String link;
-  final int priority;
   final AdType type;
-  final AdPlatform platform;
   final String? language;
 
   factory BannerEntity.fromJson(Map<String, dynamic> json) {
@@ -36,9 +32,7 @@ final class TextualBannerEntity extends BannerEntity {
   const TextualBannerEntity({
     required super.id,
     required super.link,
-    required super.priority,
     required super.type,
-    required super.platform,
     required this.title,
     super.language,
     this.icon,
@@ -55,9 +49,7 @@ final class TextualBannerEntity extends BannerEntity {
       TextualBannerEntity(
         id: json['id'],
         link: json['link'],
-        priority: json['priority'],
         type: AdType.values.byName(json['type']),
-        platform: AdPlatform.values.byName(json['platform'] ?? 'none'),
         title: json['title'],
         language: json['language'],
         icon: json['icon'],
@@ -70,9 +62,7 @@ final class ImageBannerEntity extends BannerEntity {
   const ImageBannerEntity({
     required super.id,
     required super.link,
-    required super.priority,
     required super.type,
-    required super.platform,
     required this.image,
     super.language,
   });
@@ -83,9 +73,7 @@ final class ImageBannerEntity extends BannerEntity {
       ImageBannerEntity(
         id: json['id'],
         link: json['link'],
-        priority: json['priority'],
         type: AdType.values.byName(json['type']),
-        platform: AdPlatform.values.byName(json['platform'] ?? 'none'),
         image: json['image'],
         language: json['language'],
       );

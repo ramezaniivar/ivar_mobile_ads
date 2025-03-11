@@ -46,7 +46,7 @@ class Repository {
         appId: appID,
         deviceId: await _deviceInfo.id,
         language: _deviceInfo.languageCode,
-        timeZone: _deviceInfo.timeZone,
+        timeZone: await _deviceInfo.timeZone,
       );
 
       final response = await _api.auth(req);

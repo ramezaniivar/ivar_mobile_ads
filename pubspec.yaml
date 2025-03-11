@@ -1,6 +1,6 @@
 name: ivar_mobile_ads
 description: A Flutter package for displaying customizable mobile advertisements
-version: 0.0.36
+version: 0.1.0
 homepage: https://github.com/ramezaniivar/ivar_mobile_ads
 repository: https://github.com/ramezaniivar/ivar_mobile_ads
 
@@ -17,6 +17,7 @@ dependencies:
   device_info_plus: ^11.3.0
   cached_network_image: ^3.4.1
   url_launcher: ^6.3.1
+  flutter_timezone: ^4.1.0
 
 dev_dependencies:
   flutter_test:
