@@ -50,7 +50,7 @@ dependencies:
   ivar_mobile_ads:
     git:
       url: https://github.com/ramezaniivar/ivar_mobile_ads.git
-      ref: v0.0.21  # latest_version
+      ref: latest_version
 ```
 
 Then run:
