@@ -65,6 +65,8 @@ Initialize the ads service at app startup:
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Test App ID => "686bc09a8acfc04553c9f53a"
   // Initialize the ads service
   IvarMobileAds.instance.init('YOUR_APP_ID');
 
@@ -75,6 +77,8 @@ OR
 ```dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Test App ID => "686bc09a8acfc04553c9f53a"
   // Initialize the ads service
   final adsInitialized = await IvarMobileAds.instance.init('YOUR_APP_ID');
   
