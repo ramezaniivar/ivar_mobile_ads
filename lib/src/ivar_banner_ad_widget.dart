@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
@@ -588,17 +590,53 @@ ButtonStyle get _elevatedButtonStyle {
 }
 
 void _bannerOnTap(String adID, String link) async {
+  // log click
+  Repository.instance.clickBanner(adID);
+
+  /// check is cafe bazaar link
+  if (link.contains('https://cafebazaar.ir/app/') && Platform.isAndroid) {
+    try {
+      final packageName = link.split('/').last;
+
+      final intent = AndroidIntent(
+        action: 'android.intent.action.VIEW',
+        data: 'bazaar://details/modal?id=$packageName',
+        package: 'com.farsitel.bazaar',
+      );
+
+      await intent.launch();
+
+      return;
+    } catch (err) {
+      log('erro $err');
+    }
+  }
+
+  ///check is myket link
+  // if (link.contains('https://myket.ir/app/') && Platform.isAndroid) {
+  //   try {
+  //     final packageName = link.split('/').last;
+
+  //     final intent = AndroidIntent(
+  //       action: 'android.intent.action.VIEW',
+  //       data: 'myket://details?id=$packageName',
+  //       package: 'ir.mservices.market',
+  //     );
+
+  //     await intent.launch();
+
+  //     return;
+  //   } catch (err) {
+  //     log('erro $err');
+  //   }
+  // }
+
   try {
-    Repository.instance.clickBanner(adID);
     if (!await launchUrl(Uri.parse(link),
         mode: LaunchMode.externalApplication)) {
       log("There was a problem opening the link");
-      // if (context.mounted) {
-      // }
     }
   } catch (err) {
     log('The link is invalid');
-    // if (context.mounted) {
-    // }
   }
 }

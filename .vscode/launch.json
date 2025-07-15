@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ivar_mobile_ads",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "ivar_mobile_ads (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "ivar_mobile_ads (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "ivar_mobile_ads_example",
+            "cwd": "example\\ivar_mobile_ads_example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "ivar_mobile_ads_example (profile mode)",
+            "cwd": "example\\ivar_mobile_ads_example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "ivar_mobile_ads_example (release mode)",
+            "cwd": "example\\ivar_mobile_ads_example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
