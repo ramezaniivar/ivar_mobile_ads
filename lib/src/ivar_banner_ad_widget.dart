@@ -608,28 +608,36 @@ void _bannerOnTap(String adID, String link) async {
 
       return;
     } catch (err) {
-      log('erro $err');
+      log('error $err');
     }
   }
 
-  ///check is myket link
-  // if (link.contains('https://myket.ir/app/') && Platform.isAndroid) {
-  //   try {
-  //     final packageName = link.split('/').last;
+  ///check is myket link for auto download intent
+  // https://myket.ir/app/com.example.app/auto-dl
+  if (link.contains('https://myket.ir/app/') &&
+      link.split('/').last == 'auto-dl') {
+    ///remove "/audo-dl" from link
+    link = link.replaceFirst('/auto-dl', '');
 
-  //     final intent = AndroidIntent(
-  //       action: 'android.intent.action.VIEW',
-  //       data: 'myket://details?id=$packageName',
-  //       package: 'ir.mservices.market',
-  //     );
+    if (Platform.isAndroid) {
+      try {
+        //get package name from link
+        final packageName = link.split('/').last;
 
-  //     await intent.launch();
+        final intent = AndroidIntent(
+          action: 'android.intent.action.VIEW',
+          data: 'myket://details?id=$packageName',
+          package: 'ir.mservices.market',
+        );
 
-  //     return;
-  //   } catch (err) {
-  //     log('erro $err');
-  //   }
-  // }
+        await intent.launch();
+
+        return;
+      } catch (err) {
+        log('error $err');
+      }
+    }
+  }
 
   try {
     if (!await launchUrl(Uri.parse(link),
