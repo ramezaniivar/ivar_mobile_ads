@@ -626,7 +626,7 @@ void _bannerOnTap(String adID, String link) async {
 
         final intent = AndroidIntent(
           action: 'android.intent.action.VIEW',
-          data: 'myket://details?id=$packageName',
+          data: 'myket://download/$packageName',
           package: 'ir.mservices.market',
         );
 
