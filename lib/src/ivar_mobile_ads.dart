@@ -24,7 +24,7 @@ class IvarMobileAds {
       _repo.loadInterstitialAd(adLoadCallback: adLoadCallback);
 
   bool showInterstitialAd(BuildContext context,
-      IvarFullScreenContentCallback? fullScreenContentCallback) {
+      {IvarFullScreenContentCallback? fullScreenContentCallback}) {
     if (!context.mounted) {
       log('Ivar Mobile Ads: "context" is not available');
       fullScreenContentCallback
