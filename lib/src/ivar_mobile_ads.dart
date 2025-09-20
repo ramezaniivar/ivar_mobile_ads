@@ -27,10 +27,13 @@ class IvarMobileAds {
       IvarFullScreenContentCallback? fullScreenContentCallback) {
     if (!context.mounted) {
       log('Ivar Mobile Ads: "context" is not available');
+      fullScreenContentCallback
+          ?.onAdFailedToShowFullScreenContent('The context is not available');
       return false;
     }
 
-    final ad = _repo.showInterstitialAd();
+    final ad = _repo.showInterstitialAd(
+        onError: fullScreenContentCallback?.onAdFailedToShowFullScreenContent);
     if (ad == null) return false;
 
     Navigator.push(

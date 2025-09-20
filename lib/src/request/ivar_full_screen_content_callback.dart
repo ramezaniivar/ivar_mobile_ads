@@ -6,6 +6,7 @@ final class IvarFullScreenContentCallback {
     required this.onAdDismissedFullScreenContent,
     required this.onAdClicked,
     required this.onAdCompleted,
+    required this.onAdFailedToShowFullScreenContent,
   });
 
   ///زمانی که صفحه تبلیغ نمایش داده میشه
@@ -19,4 +20,6 @@ final class IvarFullScreenContentCallback {
 
   ///زمانی که تایمر تبلیغ تمام میشه
   final VoidCallback onAdCompleted;
+
+  final void Function(String errorMsg) onAdFailedToShowFullScreenContent;
 }

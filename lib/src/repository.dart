@@ -226,9 +226,11 @@ class Repository {
 
   bool get isLoadedInterstitialAd => _interstitialAd != null;
 
-  InterstitialEntity? showInterstitialAd() {
+  InterstitialEntity? showInterstitialAd(
+      {void Function(String errorMsg)? onError}) {
     if (!isLoadedInterstitialAd) {
-      log('Ivar Mobile Ads Error: You must load the ad first.');
+      log('Ivar Mobile Ads Error: You must load the ad first');
+      if (onError != null) onError('You must load the ad first');
       return null;
     }
 
