@@ -1,8 +1,11 @@
 import 'dart:developer';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
+import 'package:ivar_mobile_ads/src/entity/interstitial_entity.dart';
+import 'package:ivar_mobile_ads/src/shared_prefs_source.dart';
 
 import 'api_service.dart';
 import 'device_info_service.dart';
@@ -19,6 +22,7 @@ class Repository {
   final _api = ApiService.instance;
   final _secureStorage = SecureStorageService.instance;
   final _deviceInfo = DeviceInfoService.instance;
+  final _prefs = SharedPrefsSource.instance;
   final List<String> _viewedBanners = [];
   final List<String> _clickedBanners = [];
 
@@ -27,6 +31,8 @@ class Repository {
   IvarBannerAd? _standardBanners;
   IvarBannerAd? _largeBanners;
   IvarBannerAd? _mediumRectangleBanners;
+
+  InterstitialEntity? _interstitialAd;
 
   bool get isAuth => _isAuth;
 
@@ -42,6 +48,10 @@ class Repository {
     _authCompleter = Completer<void>();
 
     try {
+      //clear cache
+      final isClearCacheDate = await _isClearCacheDate();
+      if (isClearCacheDate) await _clearCache();
+
       final req = AuthReq(
         appId: appID,
         deviceId: await _deviceInfo.id,
@@ -60,7 +70,7 @@ class Repository {
       return true;
     } catch (err) {
       if (err is DioException) {
-        log('ivar_mobile_ads: ${err.response?.data}');
+        log('ivar_mobile_ads: $err');
       } else {
         log('ivar_mobile_ads: $err');
       }
@@ -132,7 +142,7 @@ class Repository {
     _viewedBanners.add(id);
 
     try {
-      await _api.view(id);
+      await _api.viewBanner(id);
     } catch (err) {
       log(err.toString());
     }
@@ -149,9 +159,135 @@ class Repository {
     _clickedBanners.add(id);
 
     try {
-      await _api.click(id);
+      await _api.clickBanner(id);
     } catch (err) {
       log(err.toString());
+    }
+  }
+
+  /// - - - - - - - - -  - - - - - INTERSTITIAL - - - - - - - - - - - - - - - -
+
+  Future<bool> loadInterstitialAd() async {
+    if (_authCompleter != null) await _authCompleter!.future;
+    if (!_isAuth) {
+      log('Ivar Mobile Ads: You need to initilize first');
+      return false;
+    }
+
+    try {
+      if (isLoadedInterstitialAd) {
+        log('Ivar Mobile Ads: The interstitial ad is preloaded and ready to show');
+        return true;
+      }
+
+      //GET request
+      final res = await _api.getInterstitialAd();
+      if (res.data['data'] == null) {
+        log('Ivar Mobile Ads Error: ${res.data['message']}');
+        return false;
+      }
+
+      final InterstitialEntity ad =
+          InterstitialEntity.fromJson(res.data['data']);
+
+      switch (ad) {
+        case ImageInterstitialEntity():
+          //download image file
+          final documentDir = await _deviceInfo.appDocumentsDir;
+          final interstitialFilesPath =
+              '${documentDir.path}/ivar_mobile_ads/interstitial';
+          final savePath = '$interstitialFilesPath/${ad.media.split('/').last}';
+          final bool isExistsFile = await File(savePath).exists();
+          if (!isExistsFile) await _api.downloadFile(ad.media, savePath);
+          ad.media = savePath;
+          break;
+        case UnsupportedInterstitialEntity():
+          log('Ivar Mobile Ads Error: Your package version does not support this type of ad (${ad.type} ad type)');
+          return false;
+      }
+
+      _interstitialAd = ad;
+      log('Ivar Mobile Ads: Loaded Interstitial ad Successfully');
+      return true;
+    } catch (err) {
+      log('Ivar Mobile Ads Error: ${err.toString()}');
+      return false;
+    }
+  }
+
+  bool get isLoadedInterstitialAd => _interstitialAd != null;
+
+  InterstitialEntity? showInterstitialAd() {
+    if (!isLoadedInterstitialAd) {
+      log('Ivar Mobile Ads Error: You must load the ad first.');
+      return null;
+    }
+
+    final ad = _interstitialAd;
+    _interstitialAd = null;
+
+    //viewed
+    viewInterstitial(ad!.id);
+
+    return ad;
+  }
+
+  Future<void> viewInterstitial(String id) async {
+    if (_authCompleter != null) await _authCompleter!.future;
+    if (!_isAuth) {
+      log('ivar_mobile_ads: You need to initilize first');
+      return;
+    }
+
+    try {
+      await _api.viewInterstitial(id);
+    } catch (err) {
+      log('Ivar Mobile Ads: ${err.toString()}');
+    }
+  }
+
+  Future<void> clickInterstitial(String id) async {
+    if (_authCompleter != null) await _authCompleter!.future;
+    if (!_isAuth) {
+      log('ivar_mobile_ads: You need to initilize first');
+      return;
+    }
+
+    try {
+      await _api.clickInterstitial(id);
+    } catch (err) {
+      log('Ivar Mobile Ads: ${err.toString()}');
+    }
+  }
+
+  Future<bool> _isClearCacheDate() async {
+    //چک کردن زمانی که آخرین بار که فایل های کش پاک شده
+    final clearedCacheDate = await _prefs.clearedCacheDate;
+    if (clearedCacheDate == null) {
+      _prefs.setClearedCacheDate(DateTime.now());
+      return false;
+    }
+
+    //اگر از آخرین دفعه که کش پاک شده 30 روز گذشته بود
+    final now = DateTime.now();
+    final duration = now.difference(clearedCacheDate);
+    if (duration.inDays >= 30) {
+      //بروزرسانی تاریخ آخرین دفعه که کش پاک شده
+      _prefs.setClearedCacheDate(now);
+      return true;
+    }
+
+    return false;
+  }
+
+  Future<void> _clearCache() async {
+    final documentDir = await _deviceInfo.appDocumentsDir;
+    final interstitialFilesPath =
+        '${documentDir.path}/ivar_mobile_ads/interstitial';
+
+    final interstitialAdsDir = Directory(interstitialFilesPath);
+    if (await interstitialAdsDir.exists()) {
+      await interstitialAdsDir.delete(recursive: true);
     }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DeviceInfoService {
   DeviceInfoService._();
@@ -61,4 +62,6 @@ class DeviceInfoService {
       : Platform.isIOS
           ? IvarDevice.iPhone
           : throw Exception('device not supported');
+
+  Future<Directory> get appDocumentsDir => getApplicationDocumentsDirectory();
 }
