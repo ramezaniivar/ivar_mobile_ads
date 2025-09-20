@@ -14,7 +14,7 @@ import 'ivar_banner_ad.dart';
 
 class IvarBannerAdWidget extends StatefulWidget {
   const IvarBannerAdWidget(this.bannerAd,
-      {this.refresh = const Duration(seconds: 16), super.key});
+      {this.refresh = const Duration(seconds: 30), super.key});
   final IvarBannerAd bannerAd;
   final Duration refresh;
 

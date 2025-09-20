@@ -12,6 +12,7 @@ import 'device_info_service.dart';
 import 'entity/banner_entity.dart';
 import 'ivar_banner_ad.dart';
 import 'request/auth_req.dart';
+import 'request/ivar_interstitial_load_callback.dart';
 import 'secure_storage_service.dart';
 
 class Repository {
@@ -167,7 +168,8 @@ class Repository {
 
   /// - - - - - - - - -  - - - - - INTERSTITIAL - - - - - - - - - - - - - - - -
 
-  Future<bool> loadInterstitialAd() async {
+  Future<bool> loadInterstitialAd(
+      {IvarInterstitialLoadCallback? adLoadCallback}) async {
     if (_authCompleter != null) await _authCompleter!.future;
     if (!_isAuth) {
       log('Ivar Mobile Ads: You need to initilize first');
@@ -176,6 +178,8 @@ class Repository {
 
     try {
       if (isLoadedInterstitialAd) {
+        adLoadCallback?.onAdFailedToLoad(
+            'The interstitial ad is preloaded and ready to show');
         log('Ivar Mobile Ads: The interstitial ad is preloaded and ready to show');
         return true;
       }
@@ -184,6 +188,7 @@ class Repository {
       final res = await _api.getInterstitialAd();
       if (res.data['data'] == null) {
         log('Ivar Mobile Ads Error: ${res.data['message']}');
+        adLoadCallback?.onAdFailedToLoad(res.data['message']);
         return false;
       }
 
@@ -203,14 +208,18 @@ class Repository {
           break;
         case UnsupportedInterstitialEntity():
           log('Ivar Mobile Ads Error: Your package version does not support this type of ad (${ad.type} ad type)');
+          adLoadCallback?.onAdFailedToLoad(
+              'Your package version does not support this type of ad (${ad.type} ad type)');
           return false;
       }
 
       _interstitialAd = ad;
       log('Ivar Mobile Ads: Loaded Interstitial ad Successfully');
+      adLoadCallback?.onAdLoaded();
       return true;
     } catch (err) {
       log('Ivar Mobile Ads Error: ${err.toString()}');
+      adLoadCallback?.onAdFailedToLoad(err.toString());
       return false;
     }
   }

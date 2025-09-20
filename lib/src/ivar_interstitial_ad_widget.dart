@@ -9,6 +9,8 @@ import 'package:ivar_mobile_ads/src/entity/interstitial_entity.dart';
 import 'package:ivar_mobile_ads/src/repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../ivar_mobile_ads.dart';
+
 bool _isRTL(String text) {
   if (text.trim().isEmpty) return false;
 
@@ -25,8 +27,10 @@ bool _isRTL(String text) {
 }
 
 class IvarInterstitialAdWidget extends StatefulWidget {
-  const IvarInterstitialAdWidget(this.ad, {super.key});
+  const IvarInterstitialAdWidget(this.ad,
+      {super.key, this.fullScreenContentCallback});
   final InterstitialEntity ad;
+  final IvarFullScreenContentCallback? fullScreenContentCallback;
 
   @override
   State<IvarInterstitialAdWidget> createState() =>
@@ -43,12 +47,16 @@ class _IvarInterstitialAdWidgetState extends State<IvarInterstitialAdWidget> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.fullScreenContentCallback?.onAdShowedFullScreenContent();
       _init();
     });
   }
 
   void _init() {
-    if (showCloseTime == 0) return;
+    if (showCloseTime == 0) {
+      widget.fullScreenContentCallback?.onAdCompleted();
+      return;
+    }
 
     Timer.periodic(
       Duration(seconds: 1),
@@ -56,12 +64,17 @@ class _IvarInterstitialAdWidgetState extends State<IvarInterstitialAdWidget> {
         setState(() {
           showCloseTime -= 1;
         });
-        if (showCloseTime == 0) timer.cancel();
+        if (showCloseTime == 0) {
+          widget.fullScreenContentCallback?.onAdCompleted();
+          timer.cancel();
+        }
       },
     );
   }
 
   void onTap() async {
+    widget.fullScreenContentCallback?.onAdClicked();
+
     var link = widget.ad.link;
     final adID = widget.ad.id;
 
@@ -131,6 +144,11 @@ class _IvarInterstitialAdWidgetState extends State<IvarInterstitialAdWidget> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: showCloseTime == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          widget.fullScreenContentCallback?.onAdDismissedFullScreenContent();
+        }
+      },
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Scaffold(

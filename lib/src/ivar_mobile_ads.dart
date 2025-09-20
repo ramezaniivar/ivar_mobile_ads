@@ -19,9 +19,12 @@ class IvarMobileAds {
   Future<IvarBannerAd?> loadBannerAds(BannerAdSize size) =>
       _repo.getBannerAds(size);
 
-  Future<bool> loadInterstitialAd() => _repo.loadInterstitialAd();
+  Future<bool> loadInterstitialAd(
+          {IvarInterstitialLoadCallback? adLoadCallback}) =>
+      _repo.loadInterstitialAd(adLoadCallback: adLoadCallback);
 
-  bool showInterstitialAd(BuildContext context) {
+  bool showInterstitialAd(BuildContext context,
+      IvarFullScreenContentCallback? fullScreenContentCallback) {
     if (!context.mounted) {
       log('Ivar Mobile Ads: "context" is not available');
       return false;
@@ -33,7 +36,10 @@ class IvarMobileAds {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => IvarInterstitialAdWidget(ad),
+        builder: (context) => IvarInterstitialAdWidget(
+          ad,
+          fullScreenContentCallback: fullScreenContentCallback,
+        ),
       ),
     );
     return true;
