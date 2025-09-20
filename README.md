@@ -106,7 +106,7 @@ if (isLoaded && context.mounted) {
 }
 ```
 
-## Example
+## Example Banner Ad
 
 ```dart
 class MyHomePage extends StatelessWidget {
