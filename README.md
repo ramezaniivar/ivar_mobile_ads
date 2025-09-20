@@ -1,30 +1,21 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
-
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
 # Ivar Mobile Ads
 
-A Flutter package that provides a flexible and easy-to-use advertising solution for mobile applications. This package allows you to integrate and display various types of banner advertisements in your Flutter applications.
+A Flutter package that provides a flexible and easy-to-use advertising solution for mobile applications.
+This package allows you to integrate and display various types of **banner** and **interstitial** advertisements in your Flutter applications.
 
 ## Features
 
-- 🚀 Easy initialization with app ID
-- 📱 Multiple banner ad sizes support:
-  - Standard (320x50)
-  - Large (320x100)
-  - Medium Rectangle (300x250)
-- 🎯 Support for both textual and image-based banner ads
-- ♻️ Auto-rotating banner carousel
-- 📐 Responsive layout handling
-- 🎨 Custom banner implementations
+* 🚀 Easy initialization with app ID
+* 📱 Multiple **banner ad** sizes support:
+
+  * Standard (320x50)
+  * Large (320x100)
+  * Medium Rectangle (300x250)
+* 🎯 Support for both textual and image-based banner ads
+* ♻️ Auto-rotating banner carousel
+* 📐 Responsive layout handling
+* 🎨 Custom banner implementations
+* 🖼️ **Interstitial ads support** (full-screen ads)
 
 ## Getting Started
 
@@ -34,16 +25,12 @@ You can install this package in two ways:
 
 #### 1. Using pub.dev
 
-Add this to your package's `pubspec.yaml` file:
-
 ```yaml
 dependencies:
   ivar_mobile_ads: ^latest_version
 ```
 
 #### 2. Using GitHub
-
-If you want to use the latest development version, you can install directly from GitHub:
 
 ```yaml
 dependencies:
@@ -54,6 +41,7 @@ dependencies:
 ```
 
 Then run:
+
 ```bash
 flutter pub get
 ```
@@ -63,23 +51,10 @@ flutter pub get
 Initialize the ads service at app startup:
 
 ```dart
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Test App ID => "686bc09a8acfc04553c9f53a"
-  // Initialize the ads service
-  IvarMobileAds.instance.init('YOUR_APP_ID');
-
-  runApp(const MyApp());
-}
-```
-OR
-```dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Test App ID => "686bc09a8acfc04553c9f53a"
-  // Initialize the ads service
   final adsInitialized = await IvarMobileAds.instance.init('YOUR_APP_ID');
   
   if (adsInitialized) {
@@ -92,52 +67,73 @@ void main() async {
 
 ## Usage
 
-### Loading Banner Ads
+### Banner Ads
+
+#### Loading Banner Ads
 
 ```dart
-// Load a standard banner ad
 final bannerAd = await IvarMobileAds.instance.loadBannerAds(BannerAdSize.standard);
-
-// Load a medium rectangle banner ad
 final mediumRectangleAd = await IvarMobileAds.instance.loadBannerAds(BannerAdSize.mediumRectangle);
 ```
 
-### Displaying Banner Ads
+#### Displaying Banner Ads
 
 ```dart
-// Display the banner ad using the widget
 if (bannerAd != null) {
   IvarBannerAdWidget(bannerAd)
 }
 ```
 
-### Available Banner Sizes
+#### Available Banner Sizes
 
 ```dart
 enum BannerAdSize {
   standard,        // 320x50
-  large,          // 320x100
-  mediumRectangle // 300x250
+  large,           // 320x100
+  mediumRectangle  // 300x250
+}
+```
+
+### Interstitial Ads
+
+#### Loading & Showing Interstitial Ads
+
+```dart
+final isLoaded = await IvarMobileAds.instance.loadInterstitialAd();
+
+if (isLoaded && context.mounted) {
+  IvarMobileAds.instance.showInterstitialAd(context);
 }
 ```
 
 ## Example
 
-Here's a complete example of implementing a banner ad in your Flutter application:
-
 ```dart
 class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Ad Example')),
+      appBar: AppBar(title: const Text('Ad Example')),
       body: FutureBuilder<IvarBannerAd?>(
         future: IvarMobileAds.instance.loadBannerAds(BannerAdSize.standard),
         builder: (context, snapshot) {
-          if (snapshot.hasData && snapshot.data != null) {
-            return IvarBannerAdWidget(snapshot.data!);
-          }
-          return SizedBox();
+          return Column(
+            children: [
+              if (snapshot.hasData && snapshot.data != null)
+                IvarBannerAdWidget(snapshot.data!),
+              ElevatedButton(
+                onPressed: () async {
+                  final isLoaded = await IvarMobileAds.instance.loadInterstitialAd();
+                  if (isLoaded && context.mounted) {
+                    IvarMobileAds.instance.showInterstitialAd(context);
+                  }
+                },
+                child: const Text("Show Interstitial Ad"),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -150,8 +146,9 @@ class MyHomePage extends StatelessWidget {
 ### Support
 
 For issues, feature requests, or general questions:
-- Create an issue on our GitHub repository
-- Contact our support team
+
+* Create an issue on our GitHub repository
+* Contact our support team
 
 ### Contributing
 
@@ -163,7 +160,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ### Best Practices
 
-- Initialize the ads service as early as possible in your app lifecycle
-- Handle null responses when loading ads
-- Implement proper error handling
-- Test different banner sizes in various screen configurations
+* Initialize the ads service as early as possible in your app lifecycle
+* Handle null responses when loading ads
+* Implement proper error handling
+* Test different banner sizes in various screen configurations
+* Show interstitial ads only at natural breakpoints for a better user experience
