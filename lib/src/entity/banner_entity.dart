@@ -9,11 +9,13 @@ sealed class BannerEntity extends Entity {
     required super.id,
     required this.link,
     required this.type,
+    required this.refreshRate,
     this.language,
   });
 
   final String link;
   final AdType type;
+  final int refreshRate;
   final String? language;
 
   factory BannerEntity.fromJson(Map<String, dynamic> json) {
@@ -29,10 +31,11 @@ sealed class BannerEntity extends Entity {
 }
 
 final class TextualBannerEntity extends BannerEntity {
-  const TextualBannerEntity({
+  TextualBannerEntity({
     required super.id,
     required super.link,
     required super.type,
+    required super.refreshRate,
     required this.title,
     super.language,
     this.icon,
@@ -41,7 +44,7 @@ final class TextualBannerEntity extends BannerEntity {
   });
 
   final String title;
-  final String? icon;
+  String? icon;
   final String? description;
   final String? callToAction;
 
@@ -50,6 +53,7 @@ final class TextualBannerEntity extends BannerEntity {
         id: json['id'],
         link: json['link'],
         type: AdType.values.byName(json['type']),
+        refreshRate: json['refreshRate'],
         title: json['title'],
         language: json['language'],
         icon: json['icon'],
@@ -59,21 +63,23 @@ final class TextualBannerEntity extends BannerEntity {
 }
 
 final class ImageBannerEntity extends BannerEntity {
-  const ImageBannerEntity({
+  ImageBannerEntity({
     required super.id,
     required super.link,
     required super.type,
+    required super.refreshRate,
     required this.image,
     super.language,
   });
 
-  final String image;
+  String image;
 
   factory ImageBannerEntity.fromJson(Map<String, dynamic> json) =>
       ImageBannerEntity(
         id: json['id'],
         link: json['link'],
         type: AdType.values.byName(json['type']),
+        refreshRate: json['refreshRate'],
         image: json['image'],
         language: json['language'],
       );

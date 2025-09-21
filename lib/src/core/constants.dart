@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 final class Constants {
   static const baseUrl = 'https://ivar-ads.com';
   static const apiV1 = '$baseUrl/api/v1';
+  static const apiV2 = '$baseUrl/api/v2';
 
   static const textColor = Color.fromARGB(255, 66, 66, 78);
 }

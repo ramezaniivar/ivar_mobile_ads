@@ -5,9 +5,9 @@ import 'entity/banner_entity.dart';
 class IvarBannerAd {
   const IvarBannerAd({
     required this.size,
-    required this.ads,
+    required this.ad,
   });
 
   final BannerAdSize size;
-  final List<BannerEntity> ads;
+  final BannerEntity ad;
 }

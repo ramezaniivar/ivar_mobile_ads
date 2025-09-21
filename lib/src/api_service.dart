@@ -77,11 +77,11 @@ final class ApiService {
     return _dio!.post('${Constants.apiV1}/auth', data: req.toMap());
   }
 
-  Future<Response> getBannerAds(BannerAdSize size) async {
+  Future<Response> getBannerAd(BannerAdSize size) async {
     if (_dio == null) await _init();
 
     return _dio!.get(
-      '${Constants.apiV1}/banner_ad',
+      '${Constants.apiV2}/banner_ad',
       queryParameters: {'size': size.name},
     );
   }

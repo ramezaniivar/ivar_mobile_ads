@@ -34,6 +34,9 @@ class Repository {
   IvarBannerAd? _mediumRectangleBanners;
 
   InterstitialEntity? _interstitialAd;
+  IvarBannerAd? _standardBannerAd;
+  IvarBannerAd? _largeBannerAd;
+  IvarBannerAd? _mediumRectangleBannerAd;
 
   bool get isAuth => _isAuth;
 
@@ -88,7 +91,7 @@ class Repository {
     await _secureStorage.saveRefreshToken(refreshToken);
   }
 
-  Future<IvarBannerAd?> getBannerAds(BannerAdSize size) async {
+  Future<IvarBannerAd?> loadBannerAd(BannerAdSize size) async {
     // Wait for authentication if it's in progress
     if (_authCompleter != null) await _authCompleter!.future;
 
@@ -111,21 +114,63 @@ class Repository {
           break;
       }
 
-      final response = await _api.getBannerAds(size);
-      final banners = bannerEntityFromJson(response.data['data']);
-      if (banners.isEmpty) return null;
+      final response = await _api.getBannerAd(size);
+
+      if (response.data['data'] == null) {
+        log('ivar mobile ads: ${response.data['message']}');
+        return null;
+      }
+
+      final BannerEntity ad = BannerEntity.fromJson(response.data['data']);
+
+      final documentDir = await _deviceInfo.appDocumentsDir;
+      final bannerFilesPath = '${documentDir.path}/ivar_mobile_ads/banner';
+
+      switch (ad) {
+        case TextualBannerEntity():
+          if (ad.icon == null) break;
+          final savePath = '$bannerFilesPath/${ad.icon!.split('/').last}';
+          final bool isExistsFile = await File(savePath).exists();
+          if (!isExistsFile) await _api.downloadFile(ad.icon!, savePath);
+          ad.icon = savePath;
+          break;
+        case ImageBannerEntity():
+          //download image file
+          final savePath = '$bannerFilesPath/${ad.image.split('/').last}';
+          final bool isExistsFile = await File(savePath).exists();
+          if (!isExistsFile) await _api.downloadFile(ad.image, savePath);
+          ad.image = savePath;
+          break;
+      }
+
+      final bannerAd = IvarBannerAd(size: size, ad: ad);
 
       switch (size) {
         case BannerAdSize.standard:
-          _standardBanners = IvarBannerAd(size: size, ads: banners);
-          return _standardBanners;
+          _standardBannerAd = bannerAd;
+          break;
         case BannerAdSize.large:
-          _largeBanners = IvarBannerAd(size: size, ads: banners);
-          return _largeBanners;
+          _largeBannerAd = bannerAd;
+          break;
         case BannerAdSize.mediumRectangle:
-          _mediumRectangleBanners = IvarBannerAd(size: size, ads: banners);
-          return _mediumRectangleBanners;
+          _mediumRectangleBannerAd = bannerAd;
+          break;
       }
+      log('Ivar Mobile Ads: Loaded Banner ad Successfully');
+
+      return bannerAd;
+
+      // switch (size) {
+      //   case BannerAdSize.standard:
+      //     _standardBanners = IvarBannerAd(size: size, ad: ad);
+      //     return _standardBanners;
+      //   case BannerAdSize.large:
+      //     _largeBanners = IvarBannerAd(size: size, ad: ad);
+      //     return _largeBanners;
+      //   case BannerAdSize.mediumRectangle:
+      //     _mediumRectangleBanners = IvarBannerAd(size: size, ad: ad);
+      //     return _mediumRectangleBanners;
+      // }
     } catch (err) {
       log(err.toString());
       return null;
@@ -295,10 +340,18 @@ class Repository {
     final documentDir = await _deviceInfo.appDocumentsDir;
     final interstitialFilesPath =
         '${documentDir.path}/ivar_mobile_ads/interstitial';
+    final bannerFilesPath = '${documentDir.path}/ivar_mobile_ads/banner';
 
+    //remove interstitial files
     final interstitialAdsDir = Directory(interstitialFilesPath);
     if (await interstitialAdsDir.exists()) {
       await interstitialAdsDir.delete(recursive: true);
+    }
+
+    //remove banner files
+    final bannerAdsDir = Directory(bannerFilesPath);
+    if (await bannerAdsDir.exists()) {
+      await bannerAdsDir.delete(recursive: true);
     }
   }
 }
