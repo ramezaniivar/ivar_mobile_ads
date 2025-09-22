@@ -13,18 +13,21 @@ import 'package:url_launcher/url_launcher.dart';
 import 'ivar_banner_ad.dart';
 
 class IvarBannerAdWidget extends StatefulWidget {
-  const IvarBannerAdWidget(this.bannerAd, {super.key});
-  final IvarBannerAd bannerAd;
+  IvarBannerAdWidget(this.bannerAd, {super.key});
+  IvarBannerAd bannerAd;
 
   @override
   State<IvarBannerAdWidget> createState() => _IvarBannerAdWidgetState();
 }
 
 class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
-    with RouteAware, WidgetsBindingObserver {
+    with WidgetsBindingObserver {
+  Timer? _timer;
+  Timer? _visibilityCheckTimer;
   bool _isVisible = true;
   bool _isInForeground = true;
-  late RouteObserver<PageRoute> routeObserver;
+  bool showAd = true;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -33,15 +36,30 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
 
     // ثبت بازدید اولیه
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startVisibilityCheck();
       _logBannerView();
+      _startTimer();
+      widget.bannerAd.listener.onAdImpression?.call();
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    routeObserver = RouteObserver<PageRoute>();
-    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  void _startVisibilityCheck() {
+    _visibilityCheckTimer =
+        Timer.periodic(Duration(milliseconds: 500), (timer) {
+      final route = ModalRoute.of(context);
+      final isCurrentlyVisible = route?.isCurrent ?? false;
+
+      if (_isVisible != isCurrentlyVisible) {
+        _isVisible = isCurrentlyVisible;
+
+        if (_isVisible && _isInForeground) {
+          _startTimer();
+          _logBannerView();
+        } else {
+          _timer?.cancel();
+        }
+      }
+    });
   }
 
   @override
@@ -49,9 +67,11 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
     switch (state) {
       case AppLifecycleState.resumed:
         _isInForeground = true;
+        _startTimer();
         break;
       case AppLifecycleState.paused:
         _isInForeground = false;
+        _timer?.cancel();
         break;
       default:
         break;
@@ -60,32 +80,129 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
 
   void _logBannerView() {
     if (_isVisible && _isInForeground) {
-      final banner = widget.bannerAd.ad;
+      final ad = widget.bannerAd.ad;
       // اینجا متد ثبت بازدید را صدا بزنید
-      Repository.instance.viewBanner(banner.id);
+      Repository.instance.viewBanner(ad.id);
     }
   }
 
   @override
-  void didPushNext() {
-    _isVisible = false;
-  }
-
-  @override
-  void didPopNext() {
-    _isVisible = true;
-  }
-
-  @override
   void dispose() {
-    routeObserver.unsubscribe(this);
-    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    _visibilityCheckTimer?.cancel();
     super.dispose();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(
+      Duration(seconds: 1),
+      (timer) async {
+        if (isLoading) return;
+        if (!_isVisible) return;
+
+        isLoading = true;
+        final result = await Repository.instance
+            .refreshBanner(widget.bannerAd.ad.id, widget.bannerAd.size);
+
+        if (!mounted) return;
+        isLoading = false;
+
+        // اگه تبلیغ جدید دریافت شد
+        if (result.$2 != null) {
+          if (mounted) {
+            setState(() {
+              widget.bannerAd = result.$2!;
+            });
+          }
+
+          timer.cancel();
+          if (mounted) _startTimer();
+        }
+
+        // اگه تبلیغات تموم شده بود
+        if (result.$1 == 0 && result.$2 == null) {
+          timer.cancel();
+          if (mounted) {
+            setState(() {
+              showAd = false;
+            });
+          }
+        }
+      },
+    );
+  }
+
+  void _bannerOnTap() async {
+    final adID = widget.bannerAd.ad.id;
+    var link = widget.bannerAd.ad.link;
+
+    // log click
+    Repository.instance.clickBanner(adID);
+    widget.bannerAd.listener.onAdClicked?.call();
+
+    /// check is cafe bazaar link
+    if (link.contains('https://cafebazaar.ir/app/') && Platform.isAndroid) {
+      try {
+        final packageName = link.split('/').last;
+
+        final intent = AndroidIntent(
+          action: 'android.intent.action.VIEW',
+          data: 'bazaar://details/modal?id=$packageName',
+          package: 'com.farsitel.bazaar',
+        );
+
+        await intent.launch();
+
+        return;
+      } catch (err) {
+        log('error $err');
+      }
+    }
+
+    ///check is myket link for auto download intent
+    // https://myket.ir/app/com.example.app/auto-dl
+    if (link.contains('https://myket.ir/app/') &&
+        link.split('/').last == 'auto-dl') {
+      ///remove "/audo-dl" from link
+      link = link.replaceFirst('/auto-dl', '');
+
+      if (Platform.isAndroid) {
+        try {
+          //get package name from link
+          final packageName = link.split('/').last;
+
+          final intent = AndroidIntent(
+            action: 'android.intent.action.VIEW',
+            data: 'myket://download/$packageName',
+            package: 'ir.mservices.market',
+          );
+
+          await intent.launch();
+
+          return;
+        } catch (err) {
+          log('error $err');
+        }
+      }
+    }
+
+    try {
+      if (!await launchUrl(Uri.parse(link),
+          mode: LaunchMode.externalApplication)) {
+        log("There was a problem opening the link");
+      }
+    } catch (err) {
+      log('The link is invalid');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final banner = widget.bannerAd.ad;
+
+    if (!showAd) return const SizedBox();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -97,25 +214,17 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
           width: width,
           height: height,
           child: switch (banner) {
-            TextualBannerEntity() =>
-              _TextualBanner(banner, widget.bannerAd.size, height),
-            ImageBannerEntity() => _ImageBanner(banner),
+            TextualBannerEntity() => _TextualBanner(
+                banner,
+                widget.bannerAd.size,
+                height,
+                onTap: _bannerOnTap,
+              ),
+            ImageBannerEntity() => _ImageBanner(
+                banner,
+                onTap: _bannerOnTap,
+              ),
           },
-          // child: PageView(
-          //   controller: _pageController,
-
-          //   children: List.generate(
-          //     widget.bannerAd.ads.length,
-          //     (index) {
-          //       final banner = widget.bannerAd.ads[index];
-          //       return switch (banner) {
-          //         TextualBannerEntity() =>
-          //           _TextualBanner(banner, widget.bannerAd.size, height),
-          //         ImageBannerEntity() => _ImageBanner(banner),
-          //       };
-          //     },
-          //   ),
-          // ),
         );
       },
     );
@@ -123,18 +232,31 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
 }
 
 class _TextualBanner extends StatelessWidget {
-  const _TextualBanner(this.banner, this.size, this.bannerHeight);
+  const _TextualBanner(this.banner, this.size, this.bannerHeight,
+      {required this.onTap});
   final TextualBannerEntity banner;
   final BannerAdSize size;
   final double bannerHeight;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return switch (size) {
-      BannerAdSize.standard => _StandardTextualBanner(banner, bannerHeight),
-      BannerAdSize.large => _LargeTextualBanner(banner, bannerHeight),
-      BannerAdSize.mediumRectangle =>
-        _MediumRectangleBanner(banner, bannerHeight),
+      BannerAdSize.standard => _StandardTextualBanner(
+          banner,
+          bannerHeight,
+          onTap: onTap,
+        ),
+      BannerAdSize.large => _LargeTextualBanner(
+          banner,
+          bannerHeight,
+          onTap: onTap,
+        ),
+      BannerAdSize.mediumRectangle => _MediumRectangleBanner(
+          banner,
+          bannerHeight,
+          onTap: onTap,
+        ),
     };
   }
 }
@@ -151,9 +273,11 @@ const List<String> _rtlLanguages = [
 ];
 
 class _StandardTextualBanner extends StatelessWidget {
-  const _StandardTextualBanner(this.banner, this.bannerHeight);
+  const _StandardTextualBanner(this.banner, this.bannerHeight,
+      {required this.onTap});
   final TextualBannerEntity banner;
   final double bannerHeight;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +289,7 @@ class _StandardTextualBanner extends StatelessWidget {
     return Directionality(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: InkWell(
-        onTap: hasButton ? null : () => _bannerOnTap(banner.id, banner.link),
+        onTap: hasButton ? null : onTap,
         child: Container(
           padding: EdgeInsets.symmetric(
             horizontal: 9,
@@ -187,8 +311,8 @@ class _StandardTextualBanner extends StatelessWidget {
               if (banner.icon != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(7),
-                  child: CachedNetworkImage(
-                    imageUrl: '${Constants.baseUrl}/${banner.icon}',
+                  child: Image.file(
+                    File(banner.icon!),
                     width: bannerHeight * 0.75,
                     height: bannerHeight * 0.75,
                   ),
@@ -233,7 +357,7 @@ class _StandardTextualBanner extends StatelessWidget {
               ),
               if (hasButton)
                 ElevatedButton(
-                  onPressed: () => _bannerOnTap(banner.id, banner.link),
+                  onPressed: onTap,
                   style: _elevatedButtonStyle,
                   child: Text(
                     banner.callToAction ?? '',
@@ -255,9 +379,11 @@ class _StandardTextualBanner extends StatelessWidget {
 }
 
 class _LargeTextualBanner extends StatelessWidget {
-  const _LargeTextualBanner(this.banner, this.bannerHeight);
+  const _LargeTextualBanner(this.banner, this.bannerHeight,
+      {required this.onTap});
   final TextualBannerEntity banner;
   final double bannerHeight;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +395,7 @@ class _LargeTextualBanner extends StatelessWidget {
     return Directionality(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: InkWell(
-        onTap: hasButton ? null : () => _bannerOnTap(banner.id, banner.link),
+        onTap: hasButton ? null : onTap,
         child: Stack(
           children: [
             Positioned.fill(
@@ -296,8 +422,8 @@ class _LargeTextualBanner extends StatelessWidget {
                       ClipRRect(
                         borderRadius:
                             BorderRadius.circular(bannerHeight * 0.08),
-                        child: CachedNetworkImage(
-                          imageUrl: '${Constants.baseUrl}/${banner.icon}',
+                        child: Image.file(
+                          File(banner.icon!),
                           width: bannerHeight * 0.65,
                           height: bannerHeight * 0.65,
                         ),
@@ -340,8 +466,7 @@ class _LargeTextualBanner extends StatelessWidget {
                               ),
                               if (hasButton)
                                 ElevatedButton(
-                                  onPressed: () =>
-                                      _bannerOnTap(banner.id, banner.link),
+                                  onPressed: onTap,
                                   style: _elevatedButtonStyle,
                                   child: Text(
                                     banner.callToAction ?? '',
@@ -376,9 +501,11 @@ class _LargeTextualBanner extends StatelessWidget {
 }
 
 class _MediumRectangleBanner extends StatelessWidget {
-  const _MediumRectangleBanner(this.banner, this.bannerHeight);
+  const _MediumRectangleBanner(this.banner, this.bannerHeight,
+      {required this.onTap});
   final TextualBannerEntity banner;
   final double bannerHeight;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -390,7 +517,7 @@ class _MediumRectangleBanner extends StatelessWidget {
     return Directionality(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: InkWell(
-        onTap: hasButton ? null : () => _bannerOnTap(banner.id, banner.link),
+        onTap: hasButton ? null : onTap,
         child: Stack(
           children: [
             Positioned.fill(
@@ -415,8 +542,8 @@ class _MediumRectangleBanner extends StatelessWidget {
                       ClipRRect(
                         borderRadius:
                             BorderRadius.circular(bannerHeight * 0.03),
-                        child: CachedNetworkImage(
-                          imageUrl: '${Constants.baseUrl}/${banner.icon}',
+                        child: Image.file(
+                          File(banner.icon!),
                           width: bannerHeight * 0.25,
                           height: bannerHeight * 0.25,
                         ),
@@ -451,7 +578,7 @@ class _MediumRectangleBanner extends StatelessWidget {
                     SizedBox(height: 10),
                     if (hasButton)
                       ElevatedButton(
-                        onPressed: () => _bannerOnTap(banner.id, banner.link),
+                        onPressed: onTap,
                         style: _elevatedButtonStyle,
                         child: Text(
                           banner.callToAction ?? '',
@@ -481,19 +608,19 @@ class _MediumRectangleBanner extends StatelessWidget {
 }
 
 class _ImageBanner extends StatelessWidget {
-  const _ImageBanner(this.banner);
+  const _ImageBanner(this.banner, {required this.onTap});
   final ImageBannerEntity banner;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => _bannerOnTap(banner.id, banner.link),
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(color: Color(0xffe2e2e2), width: 1.5),
           image: DecorationImage(
-            image: CachedNetworkImageProvider(
-                '${Constants.baseUrl}/${banner.image}'),
+            image: FileImage(File(banner.image)),
             fit: BoxFit.cover,
           ),
         ),
@@ -537,64 +664,4 @@ ButtonStyle get _elevatedButtonStyle {
       borderRadius: BorderRadius.circular(7),
     ),
   );
-}
-
-void _bannerOnTap(String adID, String link) async {
-  // log click
-  Repository.instance.clickBanner(adID);
-
-  /// check is cafe bazaar link
-  if (link.contains('https://cafebazaar.ir/app/') && Platform.isAndroid) {
-    try {
-      final packageName = link.split('/').last;
-
-      final intent = AndroidIntent(
-        action: 'android.intent.action.VIEW',
-        data: 'bazaar://details/modal?id=$packageName',
-        package: 'com.farsitel.bazaar',
-      );
-
-      await intent.launch();
-
-      return;
-    } catch (err) {
-      log('error $err');
-    }
-  }
-
-  ///check is myket link for auto download intent
-  // https://myket.ir/app/com.example.app/auto-dl
-  if (link.contains('https://myket.ir/app/') &&
-      link.split('/').last == 'auto-dl') {
-    ///remove "/audo-dl" from link
-    link = link.replaceFirst('/auto-dl', '');
-
-    if (Platform.isAndroid) {
-      try {
-        //get package name from link
-        final packageName = link.split('/').last;
-
-        final intent = AndroidIntent(
-          action: 'android.intent.action.VIEW',
-          data: 'myket://download/$packageName',
-          package: 'ir.mservices.market',
-        );
-
-        await intent.launch();
-
-        return;
-      } catch (err) {
-        log('error $err');
-      }
-    }
-  }
-
-  try {
-    if (!await launchUrl(Uri.parse(link),
-        mode: LaunchMode.externalApplication)) {
-      log("There was a problem opening the link");
-    }
-  } catch (err) {
-    log('The link is invalid');
-  }
 }

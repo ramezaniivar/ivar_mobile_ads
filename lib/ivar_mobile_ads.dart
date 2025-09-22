@@ -8,3 +8,4 @@ export './src/request/ivar_interstitial_load_callback.dart'
     show IvarInterstitialLoadCallback;
 export './src/request/ivar_full_screen_content_callback.dart'
     show IvarFullScreenContentCallback;
+export 'src/request/ivar_banner_ad_listener.dart' show IvarBannerAdListener;

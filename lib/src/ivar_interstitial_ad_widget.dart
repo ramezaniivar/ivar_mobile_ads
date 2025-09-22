@@ -94,6 +94,8 @@ class _IvarInterstitialAdWidgetState extends State<IvarInterstitialAdWidget> {
 
         await intent.launch();
 
+        //close ad
+        if (context.mounted) Navigator.pop(context);
         return;
       } catch (err) {
         log('error $err');
@@ -120,6 +122,8 @@ class _IvarInterstitialAdWidgetState extends State<IvarInterstitialAdWidget> {
 
           await intent.launch();
 
+          //close ad
+          if (context.mounted) Navigator.pop(context);
           return;
         } catch (err) {
           log('error $err');

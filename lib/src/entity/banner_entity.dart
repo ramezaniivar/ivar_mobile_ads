@@ -50,7 +50,7 @@ final class TextualBannerEntity extends BannerEntity {
 
   factory TextualBannerEntity.fromJson(Map<String, dynamic> json) =>
       TextualBannerEntity(
-        id: json['id'],
+        id: json['_id'],
         link: json['link'],
         type: AdType.values.byName(json['type']),
         refreshRate: json['refreshRate'],
@@ -76,7 +76,7 @@ final class ImageBannerEntity extends BannerEntity {
 
   factory ImageBannerEntity.fromJson(Map<String, dynamic> json) =>
       ImageBannerEntity(
-        id: json['id'],
+        id: json['_id'],
         link: json['link'],
         type: AdType.values.byName(json['type']),
         refreshRate: json['refreshRate'],

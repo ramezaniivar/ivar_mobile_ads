@@ -16,8 +16,9 @@ class IvarMobileAds {
 
   bool get isInit => _repo.isAuth;
 
-  Future<IvarBannerAd?> loadBannerAd(BannerAdSize size) =>
-      _repo.loadBannerAd(size);
+  Future<IvarBannerAd?> loadBannerAd(BannerAdSize size,
+          {required IvarBannerAdListener listener}) =>
+      _repo.loadBannerAd(size, listener);
 
   Future<bool> loadInterstitialAd(
           {IvarInterstitialLoadCallback? adLoadCallback}) =>

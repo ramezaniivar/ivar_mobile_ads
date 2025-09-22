@@ -10,6 +10,7 @@ import 'package:ivar_mobile_ads/src/shared_prefs_source.dart';
 import 'api_service.dart';
 import 'device_info_service.dart';
 import 'entity/banner_entity.dart';
+import 'request/ivar_banner_ad_listener.dart';
 import 'ivar_banner_ad.dart';
 import 'request/auth_req.dart';
 import 'request/ivar_interstitial_load_callback.dart';
@@ -24,19 +25,44 @@ class Repository {
   final _secureStorage = SecureStorageService.instance;
   final _deviceInfo = DeviceInfoService.instance;
   final _prefs = SharedPrefsSource.instance;
-  final List<String> _viewedBanners = [];
-  final List<String> _clickedBanners = [];
 
   bool _isAuth = false;
   Completer<void>? _authCompleter;
-  IvarBannerAd? _standardBanners;
-  IvarBannerAd? _largeBanners;
-  IvarBannerAd? _mediumRectangleBanners;
 
   InterstitialEntity? _interstitialAd;
-  IvarBannerAd? _standardBannerAd;
-  IvarBannerAd? _largeBannerAd;
-  IvarBannerAd? _mediumRectangleBannerAd;
+  // IvarBannerAd? _standardBannerAd;
+  // IvarBannerAd? _largeBannerAd;
+  // IvarBannerAd? _mediumRectangleBannerAd;
+  // int _standardBannerRefreshInterval = 0;
+  // int _largeBannerRefreshInterval = 0;
+  // int _mediumRectangleBannerRefreshInterval = 0;
+  // int? _availableAdsCount;
+
+  // final List<IvarBannerAd> _availableStandardBanners = [];
+  // final List<IvarBannerAd> _availableLargeBanners = [];
+  // final List<IvarBannerAd> _availableMediumRectangleBanners = [];
+
+  // //state
+  final List<String> _viewedBanners = [];
+  final List<String> _clickedBanners = [];
+
+  //standard Banner
+  int? _availableStandardBannersCount;
+  int _standardBannerRefreshInterval = 0;
+  final List<IvarBannerAd> _standardBanners = [];
+  int _currentStandardBannerIndex = 0;
+
+  //large Banner
+  int? _availableLargeBannersCount;
+  int _largeBannerRefreshInterval = 0;
+  final List<IvarBannerAd> _largeBanners = [];
+  int _currentLargeBannerIndex = 0;
+
+  //medium rectangle Banner
+  int? _availableMediumRectangleBannersCount;
+  int _mediumRectangleBannerRefreshInterval = 0;
+  final List<IvarBannerAd> _mediumRectangleBanners = [];
+  int _currentMediumRectangleBannerIndex = 0;
 
   bool get isAuth => _isAuth;
 
@@ -91,91 +117,451 @@ class Repository {
     await _secureStorage.saveRefreshToken(refreshToken);
   }
 
-  Future<IvarBannerAd?> loadBannerAd(BannerAdSize size) async {
+  Future<IvarBannerAd?> loadBannerAd(
+      BannerAdSize size, IvarBannerAdListener bannerAdListener) async {
     // Wait for authentication if it's in progress
     if (_authCompleter != null) await _authCompleter!.future;
 
     // If not authenticated, start authentication process
     if (!_isAuth) {
-      log('ivar_mobile_ads: You need to initilize first');
+      bannerAdListener.onAdFailedToLoad?.call('You need to initilize first');
       return null;
     }
 
     try {
-      switch (size) {
-        case BannerAdSize.standard:
-          if (_standardBanners != null) return _standardBanners;
-          break;
-        case BannerAdSize.large:
-          if (_largeBanners != null) return _largeBanners;
-          break;
-        case BannerAdSize.mediumRectangle:
-          if (_mediumRectangleBanners != null) return _mediumRectangleBanners;
-          break;
-      }
-
-      final response = await _api.getBannerAd(size);
-
-      if (response.data['data'] == null) {
-        log('ivar mobile ads: ${response.data['message']}');
+      if (_getAvailableCount(size) == 0) {
+        bannerAdListener.onAdFailedToLoad?.call('banner ad not found');
         return null;
       }
 
-      final BannerEntity ad = BannerEntity.fromJson(response.data['data']);
-
-      final documentDir = await _deviceInfo.appDocumentsDir;
-      final bannerFilesPath = '${documentDir.path}/ivar_mobile_ads/banner';
-
-      switch (ad) {
-        case TextualBannerEntity():
-          if (ad.icon == null) break;
-          final savePath = '$bannerFilesPath/${ad.icon!.split('/').last}';
-          final bool isExistsFile = await File(savePath).exists();
-          if (!isExistsFile) await _api.downloadFile(ad.icon!, savePath);
-          ad.icon = savePath;
-          break;
-        case ImageBannerEntity():
-          //download image file
-          final savePath = '$bannerFilesPath/${ad.image.split('/').last}';
-          final bool isExistsFile = await File(savePath).exists();
-          if (!isExistsFile) await _api.downloadFile(ad.image, savePath);
-          ad.image = savePath;
-          break;
+      // اول از cache چک کن
+      final cachedBanner = _getBannerFromCache(size);
+      if (cachedBanner != null) {
+        log('loaded from cache');
+        bannerAdListener.onAdLoaded?.call(cachedBanner);
+        return cachedBanner;
       }
 
-      final bannerAd = IvarBannerAd(size: size, ad: ad);
+      // از سرور بگیر
+      await Future.delayed(Duration(milliseconds: 3600));
+      final response = await _api.getBannerAd(size);
 
-      switch (size) {
-        case BannerAdSize.standard:
-          _standardBannerAd = bannerAd;
-          break;
-        case BannerAdSize.large:
-          _largeBannerAd = bannerAd;
-          break;
-        case BannerAdSize.mediumRectangle:
-          _mediumRectangleBannerAd = bannerAd;
-          break;
+      if (response.data['data'] == null) {
+        bannerAdListener.onAdFailedToLoad?.call(response.data['message']);
+        return null;
       }
-      log('Ivar Mobile Ads: Loaded Banner ad Successfully');
 
+      final BannerEntity ad =
+          BannerEntity.fromJson(response.data['data']['ad']);
+
+      // دانلود فایل‌ها
+      await _downloadBannerFiles(ad);
+
+      final bannerAd =
+          IvarBannerAd(size: size, ad: ad, listener: bannerAdListener);
+
+      // اضافه کردن به cache و ست کردن تنظیمات
+      _addBannerToCache(
+          size, bannerAd, response.data['data']['availableAdsCount']);
+
+      log('loaded from server');
+      bannerAdListener.onAdLoaded?.call(bannerAd);
       return bannerAd;
-
-      // switch (size) {
-      //   case BannerAdSize.standard:
-      //     _standardBanners = IvarBannerAd(size: size, ad: ad);
-      //     return _standardBanners;
-      //   case BannerAdSize.large:
-      //     _largeBanners = IvarBannerAd(size: size, ad: ad);
-      //     return _largeBanners;
-      //   case BannerAdSize.mediumRectangle:
-      //     _mediumRectangleBanners = IvarBannerAd(size: size, ad: ad);
-      //     return _mediumRectangleBanners;
-      // }
     } catch (err) {
       log(err.toString());
       return null;
     }
   }
+
+  IvarBannerAd? _getBannerFromCache(BannerAdSize size) {
+    final banners = _getBannersList(size);
+    final currentIndex = _getCurrentIndex(size);
+
+    log('current index: $currentIndex, cache length: ${banners.length}');
+
+    if (currentIndex >= banners.length) return null;
+
+    log('loaded from cache');
+    return banners[currentIndex];
+  }
+
+  Future<(int time, IvarBannerAd? ad)> refreshBanner(
+      String adId, BannerAdSize size) async {
+    // کاهش تایمر
+    _decrementRefreshInterval(size);
+    final currentInterval = _getRefreshInterval(size);
+
+    log('refresh time: $currentInterval');
+
+    if (currentInterval == 0) {
+      // تایمر تموم شد - برو ad بعدی
+      _incrementIndex(size);
+      log('incremented index to: ${_getCurrentIndex(size)}');
+
+      // اول از cache بگیر
+      final cachedBanner = _getBannerFromCache(size);
+      if (cachedBanner != null) {
+        _setRefreshInterval(size, cachedBanner.ad.refreshRate);
+        return (0, cachedBanner);
+      }
+
+      // از سرور بگیر
+      return (0, await loadBannerAd(size, IvarBannerAdListener()));
+    } else {
+      // تایمر هنوز تموم نشده - همون ad فعلی
+      final currentAd = _getCurrentAd(size);
+      return (currentInterval, adId == currentAd?.ad.id ? null : currentAd);
+    }
+  }
+
+// Helper methods
+  List<IvarBannerAd> _getBannersList(BannerAdSize size) {
+    return switch (size) {
+      BannerAdSize.standard => _standardBanners,
+      BannerAdSize.large => _largeBanners,
+      BannerAdSize.mediumRectangle => _mediumRectangleBanners,
+    };
+  }
+
+  int _getCurrentIndex(BannerAdSize size) {
+    return switch (size) {
+      BannerAdSize.standard => _currentStandardBannerIndex,
+      BannerAdSize.large => _currentLargeBannerIndex,
+      BannerAdSize.mediumRectangle => _currentMediumRectangleBannerIndex,
+    };
+  }
+
+  int _getRefreshInterval(BannerAdSize size) {
+    return switch (size) {
+      BannerAdSize.standard => _standardBannerRefreshInterval,
+      BannerAdSize.large => _largeBannerRefreshInterval,
+      BannerAdSize.mediumRectangle => _mediumRectangleBannerRefreshInterval,
+    };
+  }
+
+  int? _getAvailableCount(BannerAdSize size) {
+    return switch (size) {
+      BannerAdSize.standard => _availableStandardBannersCount,
+      BannerAdSize.large => _availableLargeBannersCount,
+      BannerAdSize.mediumRectangle => _availableMediumRectangleBannersCount,
+    };
+  }
+
+  IvarBannerAd? _getCurrentAd(BannerAdSize size) {
+    final banners = _getBannersList(size);
+    final index = _getCurrentIndex(size);
+    return index < banners.length ? banners[index] : null;
+  }
+
+  void _incrementIndex(BannerAdSize size) {
+    switch (size) {
+      case BannerAdSize.standard:
+        _currentStandardBannerIndex++;
+        if (_currentStandardBannerIndex >=
+            (_availableStandardBannersCount ?? 1)) {
+          _currentStandardBannerIndex = 0;
+        }
+        break;
+      case BannerAdSize.large:
+        _currentLargeBannerIndex++;
+        if (_currentLargeBannerIndex >= (_availableLargeBannersCount ?? 1)) {
+          _currentLargeBannerIndex = 0;
+        }
+        break;
+      case BannerAdSize.mediumRectangle:
+        _currentMediumRectangleBannerIndex++;
+        if (_currentMediumRectangleBannerIndex >=
+            (_availableMediumRectangleBannersCount ?? 1)) {
+          _currentMediumRectangleBannerIndex = 0;
+        }
+        break;
+    }
+  }
+
+  void _decrementRefreshInterval(BannerAdSize size) {
+    switch (size) {
+      case BannerAdSize.standard:
+        _standardBannerRefreshInterval--;
+      case BannerAdSize.large:
+        _largeBannerRefreshInterval--;
+      case BannerAdSize.mediumRectangle:
+        _mediumRectangleBannerRefreshInterval--;
+    }
+  }
+
+  void _setRefreshInterval(BannerAdSize size, int interval) {
+    switch (size) {
+      case BannerAdSize.standard:
+        _standardBannerRefreshInterval = interval;
+      case BannerAdSize.large:
+        _largeBannerRefreshInterval = interval;
+      case BannerAdSize.mediumRectangle:
+        _mediumRectangleBannerRefreshInterval = interval;
+    }
+  }
+
+  void _addBannerToCache(
+      BannerAdSize size, IvarBannerAd bannerAd, int availableCount) {
+    switch (size) {
+      case BannerAdSize.standard:
+        _standardBannerRefreshInterval = bannerAd.ad.refreshRate;
+        _availableStandardBannersCount = availableCount;
+        _standardBanners.add(bannerAd);
+        break;
+      case BannerAdSize.large:
+        _largeBannerRefreshInterval = bannerAd.ad.refreshRate;
+        _availableLargeBannersCount = availableCount;
+        _largeBanners.add(bannerAd);
+        break;
+      case BannerAdSize.mediumRectangle:
+        _mediumRectangleBannerRefreshInterval = bannerAd.ad.refreshRate;
+        _availableMediumRectangleBannersCount = availableCount;
+        _mediumRectangleBanners.add(bannerAd);
+        break;
+    }
+  }
+
+  Future<void> _downloadBannerFiles(BannerEntity ad) async {
+    final documentDir = await _deviceInfo.appDocumentsDir;
+    final bannerFilesPath = '${documentDir.path}/ivar_mobile_ads/banner';
+
+    switch (ad) {
+      case TextualBannerEntity():
+        if (ad.icon == null) break;
+        final savePath = '$bannerFilesPath/${ad.icon!.split('/').last}';
+        final bool isExistsFile = await File(savePath).exists();
+        if (!isExistsFile) await _api.downloadFile(ad.icon!, savePath);
+        ad.icon = savePath;
+        break;
+      case ImageBannerEntity():
+        final savePath = '$bannerFilesPath/${ad.image.split('/').last}';
+        final bool isExistsFile = await File(savePath).exists();
+        if (!isExistsFile) await _api.downloadFile(ad.image, savePath);
+        ad.image = savePath;
+        break;
+    }
+  }
+  // Future<IvarBannerAd?> loadBannerAd(
+  //     BannerAdSize size, IvarBannerAdListener bannerAdListener) async {
+  //   // Wait for authentication if it's in progress
+  //   if (_authCompleter != null) await _authCompleter!.future;
+
+  //   // If not authenticated, start authentication process
+  //   if (!_isAuth) {
+  //     bannerAdListener.onAdFailedToLoad?.call('You need to initilize first');
+  //     return null;
+  //   }
+
+  //   try {
+  //     switch (size) {
+  //       case BannerAdSize.standard:
+  //         if (_availableStandardBannersCount == 0) {
+  //           bannerAdListener.onAdFailedToLoad?.call('banner ad not found');
+  //           return null;
+  //         }
+  //         if (_standardBannerRefreshInterval > 0) {
+  //           final cacheAd = _getBannerFromCache(size, setInterval: false);
+  //           if (cacheAd != null) return cacheAd;
+  //         }
+  //         break;
+  //       case BannerAdSize.large:
+  //         if (_availableLargeBannersCount == 0) {
+  //           bannerAdListener.onAdFailedToLoad?.call('banner ad not found');
+  //           return null;
+  //         }
+  //         if (_largeBannerRefreshInterval > 0) {
+  //           final cacheAd = _getBannerFromCache(size, setInterval: false);
+  //           if (cacheAd != null) return cacheAd;
+  //         }
+  //         break;
+  //       case BannerAdSize.mediumRectangle:
+  //         if (_availableMediumRectangleBannersCount == 0) {
+  //           bannerAdListener.onAdFailedToLoad?.call('banner ad not found');
+  //           return null;
+  //         }
+  //         if (_mediumRectangleBannerRefreshInterval > 0) {
+  //           final cacheAd = _getBannerFromCache(size, setInterval: false);
+  //           if (cacheAd != null) return cacheAd;
+  //         }
+  //         break;
+  //     }
+
+  //     final cachedBanner = _getBannerFromCache(size);
+  //     if (cachedBanner != null) {
+  //       bannerAdListener.onAdLoaded?.call(cachedBanner);
+  //       return cachedBanner;
+  //     }
+
+  //     await Future.delayed(Duration(milliseconds: 3600));
+  //     final response = await _api.getBannerAd(size);
+
+  //     if (response.data['data'] == null) {
+  //       bannerAdListener.onAdFailedToLoad?.call(response.data['message']);
+  //       return null;
+  //     }
+
+  //     final BannerEntity ad =
+  //         BannerEntity.fromJson(response.data['data']['ad']);
+
+  //     final documentDir = await _deviceInfo.appDocumentsDir;
+  //     final bannerFilesPath = '${documentDir.path}/ivar_mobile_ads/banner';
+
+  //     switch (ad) {
+  //       case TextualBannerEntity():
+  //         if (ad.icon == null) break;
+  //         //download icon image file
+  //         final savePath = '$bannerFilesPath/${ad.icon!.split('/').last}';
+  //         final bool isExistsFile = await File(savePath).exists();
+  //         if (!isExistsFile) await _api.downloadFile(ad.icon!, savePath);
+  //         ad.icon = savePath;
+  //         break;
+  //       case ImageBannerEntity():
+  //         //download image file
+  //         final savePath = '$bannerFilesPath/${ad.image.split('/').last}';
+  //         final bool isExistsFile = await File(savePath).exists();
+  //         if (!isExistsFile) await _api.downloadFile(ad.image, savePath);
+  //         ad.image = savePath;
+  //         break;
+  //     }
+
+  //     final bannerAd = IvarBannerAd(
+  //       size: size,
+  //       ad: ad,
+  //       listener: bannerAdListener,
+  //     );
+
+  //     switch (size) {
+  //       case BannerAdSize.standard:
+  //         _standardBannerRefreshInterval = ad.refreshRate;
+  //         _availableStandardBannersCount =
+  //             response.data['data']['availableAdsCount'];
+  //         _standardBanners.add(bannerAd);
+  //         break;
+  //       case BannerAdSize.large:
+  //         _largeBannerRefreshInterval = ad.refreshRate;
+  //         _availableLargeBannersCount =
+  //             response.data['data']['availableAdsCount'];
+  //         _largeBanners.add(bannerAd);
+  //         break;
+  //       case BannerAdSize.mediumRectangle:
+  //         _mediumRectangleBannerRefreshInterval = ad.refreshRate;
+  //         _availableMediumRectangleBannersCount =
+  //             response.data['data']['availableAdsCount'];
+  //         _mediumRectangleBanners.add(bannerAd);
+  //         break;
+  //     }
+
+  //     log('loaded from server');
+  //     bannerAdListener.onAdLoaded?.call(bannerAd);
+  //     return bannerAd;
+  //   } catch (err) {
+  //     log(err.toString());
+  //     return null;
+  //   }
+  // }
+
+  // IvarBannerAd? _getBannerFromCache(BannerAdSize size,
+  //     {bool setInterval = true}) {
+  //   switch (size) {
+  //     case BannerAdSize.standard:
+  //       log('current index: $_currentStandardBannerIndex');
+  //       log('standard banners length: ${_standardBanners.length}');
+  //       if (_currentStandardBannerIndex > (_standardBanners.length - 1)) break;
+  //       log('loaded from cache');
+  //       final ad = _standardBanners[_currentStandardBannerIndex];
+  //       if (setInterval) _standardBannerRefreshInterval = ad.ad.refreshRate;
+  //       return ad;
+  //     case BannerAdSize.large:
+  //       if (_currentLargeBannerIndex > (_largeBanners.length - 1)) break;
+  //       final ad = _largeBanners[_currentLargeBannerIndex];
+  //       if (setInterval) _largeBannerRefreshInterval = ad.ad.refreshRate;
+  //       return ad;
+  //     case BannerAdSize.mediumRectangle:
+  //       if (_currentMediumRectangleBannerIndex >
+  //           (_mediumRectangleBanners.length - 1)) {
+  //         break;
+  //       }
+  //       final ad = _mediumRectangleBanners[_currentMediumRectangleBannerIndex];
+  //       if (setInterval) {
+  //         _mediumRectangleBannerRefreshInterval = ad.ad.refreshRate;
+  //       }
+  //       return ad;
+  //   }
+  //   return null;
+  // }
+
+  // void _incrementStandardBannerIndex() {
+  //   if (_currentStandardBannerIndex < (_availableStandardBannersCount ?? 0)) {
+  //     _currentStandardBannerIndex++;
+  //   } else {
+  //     _currentStandardBannerIndex = 0;
+  //   }
+  // }
+
+  // void _incrementLargeBannerIndex() {
+  //   if (_currentLargeBannerIndex < (_availableLargeBannersCount ?? 0)) {
+  //     _currentLargeBannerIndex++;
+  //   } else {
+  //     _currentLargeBannerIndex = 0;
+  //   }
+  // }
+
+  // void _incrementMRectangleBannerIndex() {
+  //   if (_currentMediumRectangleBannerIndex <
+  //       (_availableMediumRectangleBannersCount ?? 0)) {
+  //     _currentMediumRectangleBannerIndex++;
+  //   } else {
+  //     _currentMediumRectangleBannerIndex = 0;
+  //   }
+  // }
+
+  // Future<(int time, IvarBannerAd? ad)> refreshBanner(
+  //     String adId, BannerAdSize size) async {
+  //   switch (size) {
+  //     case BannerAdSize.standard:
+  //       _standardBannerRefreshInterval--;
+  //       log('refresh time: $_standardBannerRefreshInterval');
+  //       if (_standardBannerRefreshInterval == 0) {
+  //         _incrementStandardBannerIndex();
+  //         return (0, await loadBannerAd(size, IvarBannerAdListener()));
+  //       } else if (_standardBannerRefreshInterval > 0) {
+  //         return (
+  //           _standardBannerRefreshInterval,
+  //           adId == _standardBanners[_currentStandardBannerIndex].ad.id
+  //               ? null
+  //               : _standardBanners[_currentStandardBannerIndex]
+  //         );
+  //       }
+  //     case BannerAdSize.large:
+  //       _largeBannerRefreshInterval--;
+  //       if (_largeBannerRefreshInterval == 0) {
+  //         _incrementLargeBannerIndex();
+  //         return (0, await loadBannerAd(size, IvarBannerAdListener()));
+  //       } else if (_largeBannerRefreshInterval > 0) {
+  //         return (
+  //           _largeBannerRefreshInterval,
+  //           adId == _largeBanners[_currentStandardBannerIndex].ad.id
+  //               ? null
+  //               : _largeBanners[_currentStandardBannerIndex]
+  //         );
+  //       }
+  //     case BannerAdSize.mediumRectangle:
+  //       _mediumRectangleBannerRefreshInterval--;
+  //       if (_mediumRectangleBannerRefreshInterval == 0) {
+  //         _incrementMRectangleBannerIndex();
+  //         return (0, await loadBannerAd(size, IvarBannerAdListener()));
+  //       } else if (_mediumRectangleBannerRefreshInterval > 0) {
+  //         return (
+  //           _mediumRectangleBannerRefreshInterval,
+  //           adId == _mediumRectangleBanners[_currentStandardBannerIndex].ad.id
+  //               ? null
+  //               : _mediumRectangleBanners[_currentStandardBannerIndex]
+  //         );
+  //       }
+  //   }
+
+  //   return (-1, null);
+  // }
 
   Future<void> viewBanner(String id) async {
     if (_authCompleter != null) await _authCompleter!.future;
