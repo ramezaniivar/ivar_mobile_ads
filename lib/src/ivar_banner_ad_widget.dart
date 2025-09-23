@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
 import 'package:ivar_mobile_ads/src/entity/banner_entity.dart';
@@ -54,7 +53,6 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
 
         if (_isVisible && _isInForeground) {
           _startTimer();
-          _logBannerView();
         } else {
           _timer?.cancel();
         }
@@ -79,11 +77,9 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
   }
 
   void _logBannerView() {
-    if (_isVisible && _isInForeground) {
-      final ad = widget.bannerAd.ad;
-      // اینجا متد ثبت بازدید را صدا بزنید
-      Repository.instance.viewBanner(ad.id);
-    }
+    final ad = widget.bannerAd.ad;
+    // اینجا متد ثبت بازدید را صدا بزنید
+    Repository.instance.viewBanner(ad.id);
   }
 
   @override
@@ -115,6 +111,7 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
             setState(() {
               widget.bannerAd = result.$2!;
             });
+            _logBannerView();
           }
 
           timer.cancel();
@@ -204,29 +201,31 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
 
     if (!showAd) return const SizedBox();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height =
-            width * (widget.bannerAd.size.height / widget.bannerAd.size.width);
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final height = width *
+              (widget.bannerAd.size.height / widget.bannerAd.size.width);
 
-        return SizedBox(
-          width: width,
-          height: height,
-          child: switch (banner) {
-            TextualBannerEntity() => _TextualBanner(
-                banner,
-                widget.bannerAd.size,
-                height,
-                onTap: _bannerOnTap,
-              ),
-            ImageBannerEntity() => _ImageBanner(
-                banner,
-                onTap: _bannerOnTap,
-              ),
-          },
-        );
-      },
+          return SizedBox(
+            width: width,
+            height: height,
+            child: switch (banner) {
+              TextualBannerEntity() => _TextualBanner(
+                  banner,
+                  widget.bannerAd.size,
+                  height,
+                  onTap: _bannerOnTap,
+                ),
+              ImageBannerEntity() => _ImageBanner(
+                  banner,
+                  onTap: _bannerOnTap,
+                ),
+            },
+          );
+        },
+      ),
     );
   }
 }

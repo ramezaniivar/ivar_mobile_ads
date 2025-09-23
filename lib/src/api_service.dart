@@ -89,7 +89,7 @@ final class ApiService {
   Future<Response> viewBanner(String id) async {
     if (_dio == null) await _init();
 
-    return _dio!.patch('${Constants.apiV1}/banner_ad/view/$id');
+    return _dio!.patch('${Constants.apiV2}/banner_ad/view/$id');
   }
 
   Future<Response> clickBanner(String id) async {
