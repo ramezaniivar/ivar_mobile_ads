@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../core/constants.dart';
 import 'entity.dart';
 
@@ -37,6 +39,8 @@ final class TextualBannerEntity extends BannerEntity {
     required super.type,
     required super.refreshRate,
     required this.title,
+    required this.bgColor,
+    required this.txtColor,
     super.language,
     this.icon,
     this.description,
@@ -44,6 +48,8 @@ final class TextualBannerEntity extends BannerEntity {
   });
 
   final String title;
+  final List<Color> bgColor;
+  final Color txtColor;
   String? icon;
   final String? description;
   final String? callToAction;
@@ -59,6 +65,14 @@ final class TextualBannerEntity extends BannerEntity {
         icon: json['icon'],
         description: json['description'],
         callToAction: json['callToAction'],
+        bgColor: json['bgColor'] == null
+            ? [const Color(0xffffffff), const Color(0xffefefef)]
+            : (json['bgColor'] as List)
+                .map((c) => Color((c as num).toInt()))
+                .toList(),
+        txtColor: json['txtColor'] == null
+            ? Color(0xff333333)
+            : Color(json['txtColor']),
       );
 }
 

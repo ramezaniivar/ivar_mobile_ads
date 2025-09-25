@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:animate_do/animate_do.dart' as animate_do;
 import 'package:flutter/material.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
 import 'package:ivar_mobile_ads/src/entity/banner_entity.dart';
@@ -287,91 +288,83 @@ class _StandardTextualBanner extends StatelessWidget {
 
     return Directionality(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
-      child: InkWell(
-        onTap: hasButton ? null : onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 9,
-            vertical: 4,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.symmetric(
-              horizontal: BorderSide(
-                color: Color(0xffe2e2e2),
-                width: 1.5,
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: hasButton ? null : onTap,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: banner.bgColor,
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                ),
+                border: Border.symmetric(
+                  horizontal: BorderSide(
+                    color: Color(0xffe2e2e2),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              child: Row(
+                spacing: 8,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (banner.icon != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: Image.file(
+                        File(banner.icon!),
+                        width: bannerHeight * 0.75,
+                        height: bannerHeight * 0.75,
+                      ),
+                    ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          banner.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 13.5,
+                              color: banner.txtColor,
+                              fontFamily: font,
+                              package: 'ivar_mobile_ads',
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          banner.description ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: banner.txtColor,
+                            fontFamily: font,
+                            package: 'ivar_mobile_ads',
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  if (hasButton)
+                    _CallActionButton(
+                      onTap: onTap,
+                      ad: banner,
+                      font: font,
+                    ),
+                ],
               ),
             ),
           ),
-          child: Row(
-            spacing: 5,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (banner.icon != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Image.file(
-                    File(banner.icon!),
-                    width: bannerHeight * 0.75,
-                    height: bannerHeight * 0.75,
-                  ),
-                ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      spacing: 4,
-                      children: [
-                        _adBadge(),
-                        Expanded(
-                          child: Text(
-                            banner.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: bannerHeight * 0.22,
-                                color: Constants.textColor,
-                                fontFamily: font,
-                                package: 'ivar_mobile_ads',
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      banner.description ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: bannerHeight * 0.19,
-                        color: Constants.textColor.withAlpha(180),
-                        fontFamily: font,
-                        package: 'ivar_mobile_ads',
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              if (hasButton)
-                ElevatedButton(
-                  onPressed: onTap,
-                  style: _elevatedButtonStyle,
-                  child: Text(
-                    banner.callToAction ?? '',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: font,
-                      package: 'ivar_mobile_ads',
-                    ),
-                  ),
-                )
-            ],
-          ),
-        ),
+          Positioned(top: 0, right: 0, child: _adBadge()),
+        ],
       ),
     );
   }
@@ -404,7 +397,11 @@ class _LargeTextualBanner extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  gradient: LinearGradient(
+                    colors: banner.bgColor,
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                  ),
                   border: Border.symmetric(
                     horizontal: BorderSide(
                       color: Color(0xffe2e2e2),
@@ -440,7 +437,7 @@ class _LargeTextualBanner extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: bannerHeight * 0.12,
-                              color: Constants.textColor,
+                              color: banner.txtColor,
                               fontFamily: font,
                               package: 'ivar_mobile_ads',
                               fontWeight: FontWeight.w600,
@@ -457,26 +454,17 @@ class _LargeTextualBanner extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: bannerHeight * 0.11,
-                                    color: Constants.textColor.withAlpha(190),
+                                    color: banner.txtColor,
                                     fontFamily: font,
                                     package: 'ivar_mobile_ads',
                                   ),
                                 ),
                               ),
                               if (hasButton)
-                                ElevatedButton(
-                                  onPressed: onTap,
-                                  style: _elevatedButtonStyle,
-                                  child: Text(
-                                    banner.callToAction ?? '',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: font,
-                                      package: 'ivar_mobile_ads',
-                                    ),
-                                  ),
+                                _CallActionButton(
+                                  onTap: onTap,
+                                  ad: banner,
+                                  font: font,
                                 ),
                             ],
                           ),
@@ -526,7 +514,11 @@ class _MediumRectangleBanner extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  gradient: LinearGradient(
+                    colors: banner.bgColor,
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                  ),
                   border: Border.symmetric(
                     horizontal: BorderSide(
                       color: Color(0xffe2e2e2),
@@ -555,7 +547,7 @@ class _MediumRectangleBanner extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: bannerHeight * 0.05,
-                        color: Constants.textColor,
+                        color: banner.txtColor,
                         fontFamily: font,
                         package: 'ivar_mobile_ads',
                         fontWeight: FontWeight.w600,
@@ -569,26 +561,17 @@ class _MediumRectangleBanner extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: bannerHeight * 0.04,
-                        color: Constants.textColor.withAlpha(180),
+                        color: banner.txtColor,
                         fontFamily: font,
                         package: 'ivar_mobile_ads',
                       ),
                     ),
                     SizedBox(height: 10),
                     if (hasButton)
-                      ElevatedButton(
-                        onPressed: onTap,
-                        style: _elevatedButtonStyle,
-                        child: Text(
-                          banner.callToAction ?? '',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: font,
-                            package: 'ivar_mobile_ads',
-                          ),
-                        ),
+                      _CallActionButton(
+                        onTap: onTap,
+                        ad: banner,
+                        font: font,
                       ),
                   ],
                 ),
@@ -628,39 +611,69 @@ class _ImageBanner extends StatelessWidget {
   }
 }
 
+class _CallActionButton extends StatelessWidget {
+  const _CallActionButton({required this.onTap, required this.ad, this.font});
+  final VoidCallback onTap;
+  final TextualBannerEntity ad;
+  final String? font;
+
+  @override
+  Widget build(BuildContext context) {
+    return animate_do.Tada(
+      infinite: true,
+      duration: Duration(milliseconds: 1200),
+      curve: Curves.easeInOut,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 95),
+        child: ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ad.txtColor,
+            foregroundColor: Colors.black12,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 0,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            ad.callToAction!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: ad.bgColor[0],
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: font,
+              package: 'ivar_mobile_ads',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Widget _adBadge() {
   return Container(
     padding: EdgeInsets.symmetric(
       // vertical: 1,
-      horizontal: 2,
+      horizontal: 1,
     ),
     decoration: BoxDecoration(
-      color: Colors.amber.shade700.withAlpha(30),
+      color: Colors.amber.shade800,
       borderRadius: BorderRadius.circular(2),
     ),
     child: Text(
       'AD',
       style: TextStyle(
-        color: Colors.amber.shade700,
+        color: Colors.white,
         fontWeight: FontWeight.w500,
-        fontSize: 10,
+        fontSize: 8.5,
       ),
-    ),
-  );
-}
-
-ButtonStyle get _elevatedButtonStyle {
-  return ElevatedButton.styleFrom(
-    padding: EdgeInsets.symmetric(
-      horizontal: 10,
-      vertical: 0,
-    ),
-    backgroundColor: Colors.teal,
-    shadowColor: Colors.white10,
-    overlayColor: Colors.white10,
-    disabledBackgroundColor: Colors.teal.withAlpha(180),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(7),
     ),
   );
 }

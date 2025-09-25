@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 final class Constants {
   static const baseUrl = 'https://ivar-ads.com';
+  // static const baseUrl = 'http://172.28.187.193:8080';
   static const apiV1 = '$baseUrl/api/v1';
   static const apiV2 = '$baseUrl/api/v2';
 
