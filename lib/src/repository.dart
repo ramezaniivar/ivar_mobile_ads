@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:ivar_mobile_ads/src/core/constants.dart';
 import 'package:ivar_mobile_ads/src/entity/interstitial_entity.dart';
 import 'package:ivar_mobile_ads/src/shared_prefs_source.dart';
+import 'package:media_kit/media_kit.dart';
 
 import 'api_service.dart';
 import 'device_info_service.dart';
@@ -68,6 +69,9 @@ class Repository {
 
   Future<bool> auth(String appID) async {
     if (_isAuth) return true;
+
+    // مقداردهی اولیه media_kit
+    MediaKit.ensureInitialized();
 
     // If authentication is already in progress, wait for it
     if (_authCompleter != null) {
@@ -400,17 +404,42 @@ class Repository {
         case ImageInterstitialEntity():
           //download image file
           final documentDir = await _deviceInfo.appDocumentsDir;
-          final interstitialFilesPath =
-              '${documentDir.path}/ivar_mobile_ads/interstitial';
-          final savePath = '$interstitialFilesPath/${ad.media.split('/').last}';
+          final interstitialImageFilesPath =
+              '${documentDir.path}/ivar_mobile_ads/interstitial/image';
+          final savePath =
+              '$interstitialImageFilesPath/${ad.media.split('/').last}';
           final bool isExistsFile = await File(savePath).exists();
           if (!isExistsFile) await _api.downloadFile(ad.media, savePath);
           ad.media = savePath;
           break;
+        case VideoInterstitialEntity():
+          // - - - - download image files
+          final documentDir = await _deviceInfo.appDocumentsDir;
+          final interstitialVideoFilesPath =
+              '${documentDir.path}/ivar_mobile_ads/interstitial/video';
+          //poster
+          final posterSavePath =
+              '$interstitialVideoFilesPath/${_convertVideoFilesPath(ad.poster)}';
+          final bool isExistsPosterFile = await File(posterSavePath).exists();
+          if (!isExistsPosterFile) {
+            await _api.downloadFile(ad.poster, posterSavePath);
+          }
+          ad.poster = posterSavePath;
+          //icon
+          if (ad.icon != null) {
+            final iconSavePath =
+                '$interstitialVideoFilesPath/${_convertVideoFilesPath(ad.icon!)}';
+            final bool isExistsIconFile = await File(iconSavePath).exists();
+            if (!isExistsIconFile) {
+              await _api.downloadFile(ad.icon!, iconSavePath);
+            }
+            ad.icon = iconSavePath;
+          }
+          break;
         case UnsupportedInterstitialEntity():
-          log('Ivar Mobile Ads Error: Your package version does not support this type of ad (${ad.type} ad type)');
+          log('Ivar Mobile Ads Error: Your package version does not support this type of ad (${ad.contentType} ad type)');
           adLoadCallback?.onAdFailedToLoad(
-              'Your package version does not support this type of ad (${ad.type} ad type)');
+              'Your package version does not support this type of ad (${ad.contentType} ad type)');
           return false;
       }
 
@@ -423,6 +452,21 @@ class Repository {
       adLoadCallback?.onAdFailedToLoad(err.toString());
       return false;
     }
+  }
+
+  String _convertVideoFilesPath(String path) {
+    // همه / یا \ رو به / تبدیل کن تا در ویندوز هم درست کار کنه
+    path = path.replaceAll('\\', '/');
+
+    // جدا کردن بخش‌های مسیر
+    final parts = path.split('/').where((p) => p.isNotEmpty).toList();
+
+    if (parts.length < 2) return path; // اگر مسیر کوتاه بود
+
+    final folder = parts[parts.length - 2]; // پوشه قبل از فایل
+    final filename = parts.last; // نام فایل
+
+    return '$folder-$filename';
   }
 
   bool get isLoadedInterstitialAd => _interstitialAd != null;
