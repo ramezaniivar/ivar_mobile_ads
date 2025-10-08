@@ -33,6 +33,9 @@ class _IvarInterstitialVideoAdWidgetState
   Player? player;
   // Create a [VideoController] to handle video output from [Player].
   VideoController? controller;
+  bool isVideoStarted = false; // وضعیت شروع ویدیو
+  StreamSubscription? _widthSubscription;
+  StreamSubscription? _completedSubscription;
 
   @override
   void initState() {
@@ -59,11 +62,21 @@ class _IvarInterstitialVideoAdWidgetState
 
       if (showCloseTime == 0) {
         widget.fullScreenContentCallback?.onAdCompleted();
+        _startTimer(); // حتی اگر صفر باشه برای consistency
       }
 
-      _startTimer();
+      // گوش دادن به width برای اطمینان از آماده شدن کامل ویدیو
+      _widthSubscription = player!.stream.width.listen((width) {
+        if (width != null && width > 0 && !isVideoStarted) {
+          setState(() {
+            isVideoStarted = true;
+          });
+          // شروع تایمر بعد از آماده شدن ویدیو
+          _startTimer();
+        }
+      });
 
-      player!.stream.completed.listen(
+      _completedSubscription = player!.stream.completed.listen(
         (event) {
           if (!mounted || !event) return;
 
@@ -100,6 +113,8 @@ class _IvarInterstitialVideoAdWidgetState
 
   @override
   void dispose() {
+    _widthSubscription?.cancel();
+    _completedSubscription?.cancel();
     timer?.cancel();
     timer = null;
     player
@@ -133,14 +148,16 @@ class _IvarInterstitialVideoAdWidgetState
     } else if (state == AppLifecycleState.resumed) {
       // اپ برگشت به foreground
       player?.play(); // اگر خواستی ادامه بده
-      _startTimer();
+      if (isVideoStarted) {
+        _startTimer();
+      }
     }
   }
 
-  void onTap() async {
+  void onTap() {
     widget.fullScreenContentCallback?.onAdClicked();
 
-    var link = widget.ad.link;
+    final link = widget.ad.link;
     final adID = widget.ad.id;
 
     Constants.interstitialCallAction(
@@ -169,26 +186,6 @@ class _IvarInterstitialVideoAdWidgetState
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Positioned.fill(
-                //   child: _controller.value.isInitialized
-                //       ? Center(
-                //           child: AspectRatio(
-                //             aspectRatio: _controller.value.aspectRatio,
-                //             child: VideoPlayer(_controller),
-                //           ),
-                //         )
-                //       : Center(
-                //           child: SizedBox(
-                //             width: 70,
-                //             height: 70,
-                //             child: CircularProgressIndicator(
-                //               color: Colors.white70,
-                //               strokeWidth: 4,
-                //             ),
-                //           ),
-                //         ),
-                // ),
-
                 Positioned.fill(
                   child: Center(
                     child: Video(
@@ -197,6 +194,21 @@ class _IvarInterstitialVideoAdWidgetState
                     ),
                   ),
                 ),
+
+                // لودینگ اندیکیتور
+                if (!isVideoStarted)
+                  Positioned.fill(
+                    child: Center(
+                      child: SizedBox(
+                        height: 70,
+                        width: 70,
+                        child: CircularProgressIndicator(
+                          color: Colors.white70,
+                          strokeWidth: 4,
+                        ),
+                      ),
+                    ),
+                  ),
 
                 //close button
                 Positioned(
@@ -275,9 +287,12 @@ class _IvarInterstitialVideoAdWidgetState
                                 borderRadius: BorderRadius.circular(7),
                                 child: Image.file(
                                   File(widget.ad.icon!),
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
                                 ),
                               )
-                            : SizedBox(),
+                            : const SizedBox(),
                       ],
                     ),
                   ),

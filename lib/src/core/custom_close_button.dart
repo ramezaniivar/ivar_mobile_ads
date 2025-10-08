@@ -106,8 +106,9 @@ class CustomCloseButton extends StatelessWidget {
               strokeWidth: 2.5,
               color: Colors.amberAccent,
               value: _calculateAdTimeProgress(
-                  maxTime: maxTime.toDouble(),
-                  currentTime: currentTime.toDouble()),
+                maxTime: maxTime.toDouble(),
+                currentTime: currentTime.toDouble(),
+              ),
             ),
           ),
 
