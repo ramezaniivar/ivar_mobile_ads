@@ -13,7 +13,7 @@ InterstitialAdType _parseType(String? type) {
 
   try {
     return InterstitialAdType.values.byName(type);
-  } catch (err) {
+  } catch (err, _) {
     return InterstitialAdType.none;
   }
 }

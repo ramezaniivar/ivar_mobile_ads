@@ -34,7 +34,7 @@ class TokenInterceptor extends Interceptor {
         options.headers['Authorization'] = 'Bearer $accessToken';
       }
       return handler.next(options);
-    } catch (e) {
+    } catch (e, _) {
       return handler.reject(
         DioException(
           requestOptions: options,
@@ -68,7 +68,7 @@ class TokenInterceptor extends Interceptor {
         final response =
             await _retryRequest(err.requestOptions, newAccessToken);
         return handler.resolve(response);
-      } catch (e) {
+      } catch (e, _) {
         // Clear the future in case of error
         _refreshTokenFuture = null;
         log('Token refresh failed: $e');

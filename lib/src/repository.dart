@@ -102,7 +102,7 @@ class Repository {
       _isAuth = true;
       _authCompleter!.complete();
       return true;
-    } catch (err) {
+    } catch (err, _) {
       if (err is DioException) {
         log('ivar_mobile_ads: $err');
       } else {
@@ -168,7 +168,7 @@ class Repository {
 
       bannerAdListener.onAdLoaded?.call(bannerAd);
       return bannerAd;
-    } catch (err) {
+    } catch (err, _) {
       bannerAdListener.onAdFailedToLoad?.call(err.toString());
       return null;
     }
@@ -349,7 +349,7 @@ class Repository {
 
     try {
       await _api.viewBanner(id);
-    } catch (err) {
+    } catch (err, _) {
       log(err.toString());
     }
   }
@@ -366,7 +366,7 @@ class Repository {
 
     try {
       await _api.clickBanner(id);
-    } catch (err) {
+    } catch (err, _) {
       log(err.toString());
     }
   }
@@ -447,7 +447,7 @@ class Repository {
       log('Ivar Mobile Ads: Loaded Interstitial ad Successfully');
       adLoadCallback?.onAdLoaded();
       return true;
-    } catch (err) {
+    } catch (err, _) {
       log('Ivar Mobile Ads Error: ${err.toString()}');
       adLoadCallback?.onAdFailedToLoad(err.toString());
       return false;
@@ -497,7 +497,7 @@ class Repository {
 
     try {
       await _api.viewInterstitial(id);
-    } catch (err) {
+    } catch (err, _) {
       log('Ivar Mobile Ads: ${err.toString()}');
     }
   }
@@ -511,7 +511,7 @@ class Repository {
 
     try {
       await _api.clickInterstitial(id);
-    } catch (err) {
+    } catch (err, _) {
       log('Ivar Mobile Ads: ${err.toString()}');
     }
   }

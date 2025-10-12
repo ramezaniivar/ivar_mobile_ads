@@ -154,7 +154,7 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
         await intent.launch();
 
         return;
-      } catch (err) {
+      } catch (err, _) {
         log('error $err');
       }
     }
@@ -180,7 +180,7 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
           await intent.launch();
 
           return;
-        } catch (err) {
+        } catch (err, _) {
           log('error $err');
         }
       }
@@ -191,7 +191,7 @@ class _IvarBannerAdWidgetState extends State<IvarBannerAdWidget>
           mode: LaunchMode.externalApplication)) {
         log("There was a problem opening the link");
       }
-    } catch (err) {
+    } catch (err, _) {
       log('The link is invalid');
     }
   }

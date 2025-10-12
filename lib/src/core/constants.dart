@@ -49,7 +49,7 @@ final class Constants {
         //close ad
         if (context.mounted) Navigator.pop(context);
         return;
-      } catch (err) {
+      } catch (err, _) {
         log('error $err');
       }
     }
@@ -77,7 +77,7 @@ final class Constants {
           //close ad
           if (context.mounted) Navigator.pop(context);
           return;
-        } catch (err) {
+        } catch (err, _) {
           log('error $err');
         }
       }
@@ -88,7 +88,7 @@ final class Constants {
           mode: LaunchMode.externalApplication)) {
         log("There was a problem opening the link");
       }
-    } catch (err) {
+    } catch (err, _) {
       log('The link is invalid');
     }
 
