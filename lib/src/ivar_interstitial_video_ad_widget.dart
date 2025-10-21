@@ -371,7 +371,7 @@ class __PosterScreenState extends State<_PosterScreen> {
         widget.fullScreenContentCallback?.onAdDismissedFullScreenContent();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: widget.ad.bgColor,
         body: SafeArea(
             child: Stack(
           alignment: Alignment.center,
@@ -380,7 +380,7 @@ class __PosterScreenState extends State<_PosterScreen> {
               child: Center(
                 child: Image.file(
                   File(widget.ad.poster),
-                  fit: BoxFit.contain,
+                  fit: widget.ad.imgBoxFit,
                 ),
               ),
             ),

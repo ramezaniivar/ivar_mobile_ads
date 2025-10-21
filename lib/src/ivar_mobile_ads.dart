@@ -23,6 +23,8 @@ class IvarMobileAds {
           {required IvarBannerAdListener listener}) =>
       _repo.loadBannerAd(size, listener);
 
+  bool get isLoadedInterstitialAd => _repo.isLoadedInterstitialAd;
+
   Future<bool> loadInterstitialAd(
           {IvarInterstitialLoadCallback? adLoadCallback}) =>
       _repo.loadInterstitialAd(adLoadCallback: adLoadCallback);
@@ -55,11 +57,11 @@ class IvarMobileAds {
       case VideoInterstitialEntity():
 
         //check internet
-        if (!await checkInternet()) {
-          fullScreenContentCallback
-              ?.onAdFailedToShowFullScreenContent('check internet connection');
-          return false;
-        }
+        // if (!await checkInternet()) {
+        //   fullScreenContentCallback
+        //       ?.onAdFailedToShowFullScreenContent('check internet connection');
+        //   return false;
+        // }
 
         if (!context.mounted) {
           fullScreenContentCallback

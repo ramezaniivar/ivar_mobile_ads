@@ -18,12 +18,23 @@ InterstitialAdType _parseType(String? type) {
   }
 }
 
+BoxFit _parseBoxFit(String? data) {
+  if (data == null) return BoxFit.contain;
+  try {
+    return BoxFit.values.byName(data);
+  } catch (err, _) {
+    return BoxFit.contain;
+  }
+}
+
 sealed class InterstitialEntity extends Entity {
   const InterstitialEntity({
     required super.id,
     required this.link,
     required this.displayTime,
     required this.contentType,
+    this.bgColor = Colors.white,
+    this.imgBoxFit = BoxFit.contain,
     this.ctaBGColor,
     this.ctaTextColor,
   });
@@ -33,6 +44,10 @@ sealed class InterstitialEntity extends Entity {
   final InterstitialAdType contentType;
   final Color? ctaBGColor;
   final Color? ctaTextColor;
+
+  ///image screen background color
+  final Color bgColor;
+  final BoxFit imgBoxFit;
 
   factory InterstitialEntity.fromJson(Map<String, dynamic> json) {
     final type = _parseType(json['type']);
@@ -55,6 +70,8 @@ final class ImageInterstitialEntity extends InterstitialEntity {
     this.ctaText,
     super.ctaBGColor,
     super.ctaTextColor,
+    super.bgColor,
+    super.imgBoxFit,
   });
 
   String media;
@@ -72,6 +89,9 @@ final class ImageInterstitialEntity extends InterstitialEntity {
             json['ctaBGColor'] == null ? null : Color(json['ctaBGColor']),
         ctaTextColor:
             json['ctaTextColor'] == null ? null : Color(json['ctaTextColor']),
+        bgColor:
+            json['bgColor'] == null ? Colors.white : Color(json['bgColor']),
+        imgBoxFit: _parseBoxFit(json['imgBoxFit']),
       );
 }
 
@@ -87,6 +107,8 @@ final class VideoInterstitialEntity extends InterstitialEntity {
     this.icon,
     super.ctaBGColor,
     super.ctaTextColor,
+    super.bgColor,
+    super.imgBoxFit,
   });
 
   final String media;
@@ -108,6 +130,9 @@ final class VideoInterstitialEntity extends InterstitialEntity {
             json['ctaBGColor'] == null ? null : Color(json['ctaBGColor']),
         ctaTextColor:
             json['ctaTextColor'] == null ? null : Color(json['ctaTextColor']),
+        bgColor:
+            json['bgColor'] == null ? Colors.white : Color(json['bgColor']),
+        imgBoxFit: _parseBoxFit(json['imgBoxFit']),
       );
 }
 

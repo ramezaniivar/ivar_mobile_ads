@@ -107,7 +107,7 @@ class _IvarInterstitialImageAdWidgetState
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: widget.ad.bgColor,
           body: SafeArea(
               child: Stack(
             children: [
@@ -158,7 +158,7 @@ class _ImageAd extends StatelessWidget {
                 onTap: ad.ctaText == null ? onTap : null,
                 child: Image.file(
                   File(ad.media),
-                  fit: BoxFit.contain,
+                  fit: ad.imgBoxFit,
                 )),
           ),
         ),

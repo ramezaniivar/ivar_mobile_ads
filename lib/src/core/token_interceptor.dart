@@ -16,18 +16,18 @@ class TokenInterceptor extends Interceptor {
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     try {
-      final isConnected = await checkInternet();
-      if (!isConnected) {
-        log('ivar_mobile_ads: check internet');
-        return handler.reject(
-          DioException(
-            requestOptions: options,
-            // error: 'internet connection',
-            // type: DioExceptionType.unknown,
-            // message: 'check internet',
-          ),
-        );
-      }
+      // final isConnected = await checkInternet();
+      // if (!isConnected) {
+      //   log('ivar_mobile_ads: check internet');
+      //   return handler.reject(
+      //     DioException(
+      //       requestOptions: options,
+      //       // error: 'internet connection',
+      //       // type: DioExceptionType.unknown,
+      //       // message: 'check internet',
+      //     ),
+      //   );
+      // }
 
       final accessToken = await storage.getAccessToken();
       if (accessToken != null && !options.path.contains('auth')) {

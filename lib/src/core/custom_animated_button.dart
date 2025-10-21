@@ -21,7 +21,7 @@ class __CustomAnimatedButtonState extends State<CustomAnimatedButton> {
     return Center(
       child: animate_do.Tada(
         infinite: true,
-        duration: Duration(milliseconds: 1200),
+        duration: Duration(milliseconds: 1700),
         curve: Curves.easeInOut,
         child: Directionality(
           textDirection: Constants.isRTL(widget.text)
@@ -32,7 +32,7 @@ class __CustomAnimatedButtonState extends State<CustomAnimatedButton> {
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.bgColor ?? Color(0xffeaeaea),
               foregroundColor: widget.textColor ?? Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),

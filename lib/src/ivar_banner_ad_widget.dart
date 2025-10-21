@@ -291,7 +291,7 @@ class _StandardTextualBanner extends StatelessWidget {
       child: Stack(
         children: [
           InkWell(
-            onTap: hasButton ? null : onTap,
+            onTap: onTap,
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: 10,
@@ -302,12 +302,6 @@ class _StandardTextualBanner extends StatelessWidget {
                   colors: banner.bgColor,
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
-                ),
-                border: Border.symmetric(
-                  horizontal: BorderSide(
-                    color: Color(0xffe2e2e2),
-                    width: 1.5,
-                  ),
                 ),
               ),
               child: Row(
@@ -387,7 +381,7 @@ class _LargeTextualBanner extends StatelessWidget {
     return Directionality(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: InkWell(
-        onTap: hasButton ? null : onTap,
+        onTap: onTap,
         child: Stack(
           children: [
             Positioned.fill(
@@ -401,12 +395,6 @@ class _LargeTextualBanner extends StatelessWidget {
                     colors: banner.bgColor,
                     begin: Alignment.centerRight,
                     end: Alignment.centerLeft,
-                  ),
-                  border: Border.symmetric(
-                    horizontal: BorderSide(
-                      color: Color(0xffe2e2e2),
-                      width: 1.5,
-                    ),
                   ),
                 ),
                 child: Row(
@@ -504,7 +492,7 @@ class _MediumRectangleBanner extends StatelessWidget {
     return Directionality(
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: InkWell(
-        onTap: hasButton ? null : onTap,
+        onTap: onTap,
         child: Stack(
           children: [
             Positioned.fill(
@@ -518,12 +506,6 @@ class _MediumRectangleBanner extends StatelessWidget {
                     colors: banner.bgColor,
                     begin: Alignment.centerRight,
                     end: Alignment.centerLeft,
-                  ),
-                  border: Border.symmetric(
-                    horizontal: BorderSide(
-                      color: Color(0xffe2e2e2),
-                      width: 1.5,
-                    ),
                   ),
                 ),
                 child: Column(
@@ -600,7 +582,6 @@ class _ImageBanner extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Color(0xffe2e2e2), width: 1.5),
           image: DecorationImage(
             image: FileImage(File(banner.image)),
             fit: BoxFit.cover,
@@ -621,7 +602,7 @@ class _CallActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return animate_do.Tada(
       infinite: true,
-      duration: Duration(milliseconds: 1200),
+      duration: Duration(milliseconds: 1700),
       curve: Curves.easeInOut,
       child: Container(
         constraints: BoxConstraints(maxWidth: 95),
