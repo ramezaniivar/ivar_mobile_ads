@@ -1,6 +1,6 @@
 name: ivar_mobile_ads
 description: A Flutter package for displaying customizable mobile advertisements
-version: 0.4.4
+version: 0.4.41
 homepage: https://github.com/ramezaniivar/ivar_mobile_ads
 repository: https://github.com/ramezaniivar/ivar_mobile_ads
 
@@ -57,27 +57,7 @@ flutter:
   fonts:
     - family: Vazir
       fonts:
-        - asset: assets/fonts/vazir/Vazirmatn-Black.ttf
-          weight: 900
-        - asset: assets/fonts/vazir/Vazirmatn-Bold.ttf
-          weight: 800
-        - asset: assets/fonts/vazir/Vazirmatn-ExtraBold.ttf
-          weight: 700
-        - asset: assets/fonts/vazir/Vazirmatn-ExtraLight.ttf
-          weight: 600
-        - asset: assets/fonts/vazir/Vazirmatn-Light.ttf
-          weight: 500
         - asset: assets/fonts/vazir/Vazirmatn-Medium.ttf
-          weight: 400
-        - asset: assets/fonts/vazir/Vazirmatn-Regular.ttf
-          weight: 300
-        - asset: assets/fonts/vazir/Vazirmatn-SemiBold.ttf
-          weight: 200
-        - asset: assets/fonts/vazir/Vazirmatn-Thin.ttf
-          weight: 100
-    - family: MingCute
-      fonts:
-        - asset: assets/fonts/MingCute.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
