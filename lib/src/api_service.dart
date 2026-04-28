@@ -38,14 +38,6 @@ import 'package:ivar_mobile_ads/src/core/token_interceptor.dart';
 // }
 
 final class ApiService {
-  // ApiService() : _dio = Dio() {
-  //   _dio.interceptors.add(
-  //     TokenInterceptor(
-  //       dio: _dio,
-  //       storage: SecureStorageService(),
-  //     ),
-  //   );
-  // }
   ApiService._();
   static final ApiService _instance = ApiService._();
 

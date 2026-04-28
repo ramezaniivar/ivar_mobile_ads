@@ -54,14 +54,15 @@ class DeviceInfoService {
   }
 
   ///get device time zone for example "Asia/Tehran"
-  Future<String> get timeZone => FlutterTimezone.getLocalTimezone();
+  Future<String> get timeZone async =>
+      (await FlutterTimezone.getLocalTimezone()).identifier;
 
   String get languageCode => Platform.localeName.split('_').first;
   IvarDevice get platform => Platform.isAndroid
       ? IvarDevice.android
       : Platform.isIOS
-          ? IvarDevice.iPhone
-          : throw Exception('device not supported');
+      ? IvarDevice.iPhone
+      : throw Exception('device not supported');
 
   Future<Directory> get appDocumentsDir => getApplicationDocumentsDirectory();
 }
